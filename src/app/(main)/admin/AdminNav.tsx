@@ -1,0 +1,99 @@
+import { Column, Row, Tooltip, TooltipTrigger } from '@pulselytics/react-zen';
+import { IconLabel } from '@/components/common/IconLabel';
+import Link from '@/components/common/Link';
+import { NavMenu } from '@/components/common/NavMenu';
+import { useMessages, useNavigation } from '@/components/hooks';
+import {
+  ArrowLeft,
+  Clock,
+  Globe,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  User,
+  Users,
+} from '@/components/icons';
+
+export function AdminNav({ onItemClick }: { onItemClick?: () => void }) {
+  const { t, labels } = useMessages();
+  const { pathname, renderUrl } = useNavigation();
+
+  const items = [
+    {
+      label: t(labels.manage),
+      items: [
+        {
+          id: 'users',
+          label: t(labels.users),
+          path: '/admin/users',
+          icon: <User />,
+        },
+        {
+          id: 'websites',
+          label: t(labels.websites),
+          path: '/admin/websites',
+          icon: <Globe />,
+        },
+        {
+          id: 'teams',
+          label: t(labels.teams),
+          path: '/admin/teams',
+          icon: <Users />,
+        },
+        {
+          id: 'security',
+          label: t(labels.security),
+          path: '/admin/security',
+          icon: <ShieldCheck />,
+        },
+        {
+          id: 'audit',
+          label: 'Audit Log',
+          path: '/admin/audit',
+          icon: <ScrollText />,
+        },
+        {
+          id: 'scheduler',
+          label: 'Scheduler',
+          path: '/admin/scheduler',
+          icon: <Clock />,
+        },
+        {
+          id: 'settings',
+          label: 'Settings',
+          path: '/admin/settings',
+          icon: <Settings />,
+        },
+      ],
+    },
+  ];
+
+  const selectedKey = items
+    .flatMap(e => e.items)
+    ?.find(({ path }) => path && pathname.startsWith(path))?.id;
+
+  return (
+    <Column gap="2">
+      <Link href={renderUrl('/websites', false)} role="button" onClick={onItemClick}>
+        <TooltipTrigger delay={0}>
+          <Row
+            tabIndex={0}
+            alignItems="center"
+            hover={{ backgroundColor: 'surface-sunken' }}
+            borderRadius
+            minHeight="9"
+          >
+            <IconLabel icon={<ArrowLeft />} label={t(labels.back)} padding />
+          </Row>
+          <Tooltip placement="right">{t(labels.back)}</Tooltip>
+        </TooltipTrigger>
+      </Link>
+      <NavMenu
+        items={items}
+        selectedKey={selectedKey}
+        allowMinimize={false}
+        onItemClick={onItemClick}
+      />
+    </Column>
+  );
+}

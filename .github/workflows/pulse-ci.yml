@@ -1,0 +1,55 @@
+name: Pulse CI
+
+# Builds Pulse Analytics and runs the Pulse unit test suite
+# (src/lib/pulse/__tests__). The build performs its database check/schema
+# step against the PostgreSQL service below, mirroring a manual install.
+
+on:
+  push:
+    branches: [main, 'pulse-*']
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pulse
+          POSTGRES_PASSWORD: pulse
+          POSTGRES_DB: pulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://pulse:pulse@localhost:5432/pulse
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up pnpm 12.3.4
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run Pulse unit tests
+        run: pnpm test:pulse

@@ -1,0 +1,10 @@
+{
+  "name": "@pulselytics/components",
+  "version": "0.130.0",
+  "description": "Pulse React components.",
+  "author": "Pulselytics",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts"
+}
