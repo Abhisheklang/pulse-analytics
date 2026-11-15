@@ -75,7 +75,7 @@ A look at the current interface — home, reporting, experiments and theming.
 - Per-site data-retention controls with automatic cleanup
 - Fully self-hosted — your data never leaves your infrastructure, and the app never phones home
 
-**Added in this version** (full details under "What changed" below)
+**Added in this version** (full details in the feature notes below)
 
 - Rule-based insights and chart annotations
 - Traffic alerts and scheduled reports — delivered to webhooks, Slack, Discord, Telegram or email
@@ -86,42 +86,32 @@ A look at the current interface — home, reporting, experiments and theming.
 - Data-warehouse export to S3 or BigQuery, plus a live event debugger
 - CSV importer (GA4, Plausible, Matomo), an admin audit log and a built-in scheduler
 
-### What changed in this version
+### About this build
 
-- **Name** — the product is presented as "Pulse Analytics" across page titles, navigation,
-  the login screen, share pages, the API documentation and all bundled UI translations.
-- **Logo** — a new original mark: a plus sign merged with a pulse/heartbeat line, drawn in the
-  brand palette (see [BRANDING.md](BRANDING.md)). Ships as the app logo and the full favicon set.
-- **Colours** — the "Midnight Pulse" palette (indigo `#4f46e5` → violet `#7c3aed`) applied to
-  the UI accent colour, chart colour scale and dashboard theme colours.
-- **Tagline** — "Know your traffic. Guard their privacy." on the login screen, page metadata
-  and this README.
-- **No phone-home** — the upstream update check, build telemetry and telemetry pixel were
-  removed/disabled. This build never contacts the original project's servers.
-- **Own packages** — the two workspace packages were renamed to `@pulselytics/api-client`
-  and `@pulselytics/mcp`, with Pulse-named exports (`PulseClient`, `createPulseMcpServer`),
-  under the owner's own npm scope.
-- **Vendored UI library** — the React component library is now a third own package,
-  `@pulselytics/react-zen` under `packages/react-zen`. It is a vendored copy of the
-  MIT-licensed react-zen library (v0.255.0, © Umami Software, Inc.), carried in-tree with
-  its licence intact and built from source as part of the normal build; its public API,
-  component names and `--zen-*` CSS variables are unchanged.
-- **Renamed contracts** — the functional contracts carry Pulse names too (a clean
-  break made pre-launch, with no compatibility shims): the tracker API is
-  `window.pulse` / `pulseConfig` with `data-pulse-event*` attributes, all API
-  headers are `x-pulse-*`, API keys use the `pulse_` prefix, environment variables
-  are `PULSE_*`, and web-storage keys are `pulse.*`. The database schema and
-  migration names are unchanged.
+- **Self-hosted only** — Pulse Analytics never phones home: no update checks, no
+  telemetry, no external calls except the delivery endpoints you configure yourself
+  (webhooks, Slack, Discord, Telegram, email, S3/BigQuery).
+- **Packages** — the API client and the MCP server are published on npm as
+  `@pulselytics/api-client` and `@pulselytics/mcp` (`PulseClient`,
+  `createPulseMcpServer`). The UI component library ships in-tree as
+  `@pulselytics/react-zen` under `packages/react-zen` and is built from source
+  as part of the normal build.
+- **Tracker & API** — the tracking snippet is `window.pulse` / `pulseConfig` with
+  `data-pulse-event*` attributes; API headers are `x-pulse-*`, API keys use the
+  `pulse_` prefix, settings are `PULSE_*` environment variables, and browser
+  storage keys are `pulse.*`.
+- **Design** — the "Midnight Pulse" palette (indigo `#4f46e5` → violet `#7c3aed`),
+  an original logo (see [BRANDING.md](BRANDING.md)), and five switchable colour
+  themes with light, dark and system modes.
 
-### Pulse extras added in this version
+### Feature details — operator tools
 
 New operator/workflow features, implemented additively (new `pulse_*` tables, new
 `/api/pulse/*` routes, a new "Pulse" section in the website sidebar). The new features are
 built and verified against the PostgreSQL deployment of this build.
 
 - **Chart annotations** — annotate the traffic chart (product launches, campaigns) with
-  dated notes; markers render on the Overview chart (this capability ships in the base
-  product and is verified working in this build).
+  dated notes; markers render on the Overview chart.
 - **Traffic alerts** — per-website rules (spike/drop/threshold/no-data over pageviews or
   visitors) delivered to any webhook, with a full evaluation history. Evaluate with
   `POST /api/pulse/cron/alerts` (localhost, or the `x-cron-secret` header when
@@ -146,7 +136,7 @@ built and verified against the PostgreSQL deployment of this build.
   from period-over-period data (traffic change, page gainers/losers, referrer
   drivers, device shifts, annotation correlations). No AI, no external calls.
 
-### Pulse wave 2
+### Feature details — delivery, roll-up & privacy
 
 - **Core Web Vitals** — an optional add-on script (`/pulse-vitals.js`, included
   alongside the standard tracking script) measures LCP, INP, CLS, FCP and TTFB in
@@ -175,7 +165,7 @@ built and verified against the PostgreSQL deployment of this build.
   page shows totals, a daily trend, revenue by page and by referrer, and average
   revenue per visitor, with the tracking snippet documented on the page itself.
 
-### Pulse wave 3
+### Feature details — experiments, dashboards & data
 
 - **A/B testing** — per-website experiments with weighted variants and a chosen
   conversion event. The optional `/pulse-ab.js` add-on (included alongside the
@@ -222,7 +212,7 @@ built and verified against the PostgreSQL deployment of this build.
 ### Install from source
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/Abhisheklang/pulse-analytics.git
 cd pulse-analytics
 pnpm install
 ```
