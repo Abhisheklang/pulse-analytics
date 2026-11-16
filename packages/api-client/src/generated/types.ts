@@ -1182,6 +1182,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/pulse/websites/{websiteId}/ask': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get pulse websites website id ask
+     * @description Generated from the App Router handler and its request-validation source. Add a colocated contract.ts to supply exact response models and curated documentation.
+     */
+    get: operations['getPulseWebsitesWebsiteIdAsk'];
+    put?: never;
+    /**
+     * Create or update pulse websites website id ask
+     * @description Generated from the App Router handler and its request-validation source. Add a colocated contract.ts to supply exact response models and curated documentation.
+     */
+    post: operations['postPulseWebsitesWebsiteIdAsk'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/pulse/websites/{websiteId}/events/live': {
     parameters: {
       query?: never;
@@ -11174,6 +11198,148 @@ export interface operations {
           'application/json': {
             deleted: boolean;
           };
+        };
+      };
+      /** @description Unauthorized. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "error": {
+           *         "code": "unauthorized",
+           *         "message": "Unauthorized.",
+           *         "status": 401
+           *       }
+           *     }
+           */
+          'application/json': components['schemas']['ApiError'];
+        };
+      };
+    };
+  };
+  getPulseWebsitesWebsiteIdAsk: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID of the website. */
+        websiteId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The operation completed successfully. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            capabilities: string[];
+            examples: string[];
+            llmConfigured: boolean;
+            mode: string;
+          };
+        };
+      };
+      /** @description Unauthorized. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "error": {
+           *         "code": "unauthorized",
+           *         "message": "Unauthorized.",
+           *         "status": 401
+           *       }
+           *     }
+           */
+          'application/json': components['schemas']['ApiError'];
+        };
+      };
+    };
+  };
+  postPulseWebsitesWebsiteIdAsk: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID of the website. */
+        websiteId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          question: string;
+        };
+      };
+    };
+    responses: {
+      /** @description The operation completed successfully. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            capabilities?: string[];
+            explanation: string;
+            llmConfigured: boolean;
+            mode: 'llm' | 'builtin';
+            plan?: {
+              dimension:
+                | 'browser'
+                | 'os'
+                | 'device'
+                | 'country'
+                | 'none'
+                | 'page'
+                | 'referrer'
+                | 'day';
+              filter?: string;
+              intent: 'trend' | 'summary' | 'top' | 'compare';
+              /** @description Maximum number of rows to return. */
+              limit: number;
+              metric: 'pageviews' | 'visitors' | 'visits' | 'bounceRate';
+              /** @description Relative date range, for example 7d or 30day, used instead of an explicit startAt/endAt range. */
+              period: string;
+            };
+            question: string;
+            rows?: {
+              /** @description Display name of the resource. */
+              name: string;
+              previous?: number;
+              value: number;
+            }[];
+            status: 'ok' | 'refused';
+          };
+        };
+      };
+      /** @description Bad request. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "error": {
+           *         "code": "bad-request",
+           *         "message": "Bad request.",
+           *         "status": 400
+           *       }
+           *     }
+           */
+          'application/json': components['schemas']['ApiError'];
         };
       };
       /** @description Unauthorized. */

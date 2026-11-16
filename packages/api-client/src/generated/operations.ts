@@ -1159,6 +1159,14 @@ export const operations = {
     queryParams: [],
     hasBody: false,
   },
+  getPulseWebsitesWebsiteIdAsk: {
+    operationId: 'getPulseWebsitesWebsiteIdAsk',
+    method: 'get',
+    path: '/api/pulse/websites/{websiteId}/ask',
+    pathParams: ['websiteId'],
+    queryParams: [],
+    hasBody: false,
+  },
   getPulseWebsitesWebsiteIdEventsLive: {
     operationId: 'getPulseWebsitesWebsiteIdEventsLive',
     method: 'get',
@@ -3418,6 +3426,14 @@ export const operations = {
     queryParams: [],
     hasBody: true,
   },
+  postPulseWebsitesWebsiteIdAsk: {
+    operationId: 'postPulseWebsitesWebsiteIdAsk',
+    method: 'post',
+    path: '/api/pulse/websites/{websiteId}/ask',
+    pathParams: ['websiteId'],
+    queryParams: [],
+    hasBody: true,
+  },
   postPulseWebsitesWebsiteIdExperiments: {
     operationId: 'postPulseWebsitesWebsiteIdExperiments',
     method: 'post',
@@ -4777,6 +4793,18 @@ export abstract class GeneratedPulseClient {
   }
 
   /**
+   * Get pulse websites website id ask
+   * Generated from the App Router handler and its request-validation source. Add a colocated contract.ts to supply exact response models and curated documentation.
+   * `GET /api/pulse/websites/{websiteId}/ask`
+   */
+  getPulseWebsitesWebsiteIdAsk(
+    input: OperationInput<'getPulseWebsitesWebsiteIdAsk'>,
+    options?: RequestOptions,
+  ): Promise<OperationOutput<'getPulseWebsitesWebsiteIdAsk'>> {
+    return this.execute('getPulseWebsitesWebsiteIdAsk', input, options);
+  }
+
+  /**
    * Get pulse websites website id events live
    * Generated from the App Router handler and its request-validation source. Add a colocated contract.ts to supply exact response models and curated documentation.
    * `GET /api/pulse/websites/{websiteId}/events/live`
@@ -6094,6 +6122,18 @@ export abstract class GeneratedPulseClient {
     options?: RequestOptions,
   ): Promise<OperationOutput<'postPulseWebsitesWebsiteIdAlerts'>> {
     return this.execute('postPulseWebsitesWebsiteIdAlerts', input, options);
+  }
+
+  /**
+   * Create or update pulse websites website id ask
+   * Generated from the App Router handler and its request-validation source. Add a colocated contract.ts to supply exact response models and curated documentation.
+   * `POST /api/pulse/websites/{websiteId}/ask`
+   */
+  postPulseWebsitesWebsiteIdAsk(
+    input: OperationInput<'postPulseWebsitesWebsiteIdAsk'>,
+    options?: RequestOptions,
+  ): Promise<OperationOutput<'postPulseWebsitesWebsiteIdAsk'>> {
+    return this.execute('postPulseWebsitesWebsiteIdAsk', input, options);
   }
 
   /**

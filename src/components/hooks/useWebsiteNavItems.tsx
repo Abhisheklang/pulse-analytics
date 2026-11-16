@@ -16,6 +16,7 @@ import {
   Search,
   Settings,
   Sheet,
+  Sparkles,
   Tag,
   Terminal,
   User,
@@ -71,6 +72,12 @@ export function useWebsiteNavItems(websiteId: string) {
           label: 'Insights',
           icon: <ChartPie />,
           path: renderPath('/pulse/insights'),
+        },
+        {
+          id: 'pulse-ask',
+          label: 'Ask Pulse',
+          icon: <Sparkles />,
+          path: renderPath('/pulse/ask'),
         },
         {
           id: 'pulse-alerts',

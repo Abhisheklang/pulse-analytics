@@ -43,6 +43,14 @@ A look at the current interface — home, reporting, experiments and theming.
 
 ![Website overview — insights and traffic chart](docs/screenshots/website-overview.png)
 
+**Ask Pulse** — the AI analytics assistant answering a question from real data, with the query plan shown.
+
+![Ask Pulse — AI analytics assistant](docs/screenshots/ask-pulse.png)
+
+**Ask Pulse on a phone** — the same assistant in the compact layout.
+
+![Ask Pulse on a phone — compact layout](docs/screenshots/ask-pulse-phone.png)
+
 **Roll-up** — combined totals, trend and per-site comparison across every site.
 
 ![Roll-up — all sites combined](docs/screenshots/rollup.png)
@@ -78,6 +86,7 @@ A look at the current interface — home, reporting, experiments and theming.
 **Added in this version** (full details in the feature notes below)
 
 - Rule-based insights and chart annotations
+- Ask Pulse — an AI analytics assistant: ask plain-English questions and get answers computed from your own data, with the query plan shown
 - Traffic alerts and scheduled reports — delivered to webhooks, Slack, Discord, Telegram or email
 - A/B testing (Experiments) with statistical-significance testing built in
 - Drag-and-drop custom dashboards and a cross-site roll-up view
@@ -135,6 +144,47 @@ built and verified against the PostgreSQL deployment of this build.
 - **Rule-based insights** — plain-English insight cards computed deterministically
   from period-over-period data (traffic change, page gainers/losers, referrer
   drivers, device shifts, annotation correlations). No AI, no external calls.
+
+### Feature details — Ask Pulse (AI analytics assistant)
+
+Ask Pulse answers plain-English questions about a website's analytics, on the
+**Ask Pulse** page in the website sidebar. Examples:
+
+- "Which pages got the most views this month?"
+- "How many visitors came from Google this week?"
+- "Why did traffic drop last Tuesday?"
+- "What are my top referrers in the last 30 days?"
+- "Show me pageviews per day this week"
+- "What is my bounce rate this month?"
+
+![Ask Pulse — a question answered from real data, with the query plan shown](docs/screenshots/ask-pulse.png)
+
+How it works — safety first:
+
+- A question is never turned into free-form SQL. It is converted into a
+  structured **query plan** (intent, metric, breakdown, date range) drawn from a
+  fixed allow-list, and only that plan runs — through the same parameterized
+  data layer as every other report. The plan that ran is shown under each
+  answer, so you can see exactly what was measured.
+- Every number in the explanation comes from the executed result. If a
+  question cannot be mapped to a supported plan, Ask Pulse says so and lists
+  what it can answer, instead of inventing an answer. It is read-only and
+  cannot identify individual visitors.
+
+Two modes:
+
+- **Built-in parser (default)** — a deterministic parser built into Pulse
+  covers the supported question types: totals (pageviews, visitors, visits,
+  bounce rate), top pages/referrers/countries/browsers/systems/devices, per-day
+  trends, period-over-period change with the biggest page and referrer movers,
+  and counts for a single referrer — over today, yesterday, a named weekday,
+  the last N days, or this/last week or month. No external calls are made.
+- **LLM mode** — set the `OPENAI_API_KEY` environment variable on the server
+  (optionally `OPENAI_MODEL`, default `gpt-4o-mini`) and questions are first
+  parsed by the model into the same allow-listed plan format. Model output is
+  validated against the allow-list before anything runs; invalid output falls
+  back to the built-in parser. The current mode is shown as a badge on the
+  Ask Pulse page.
 
 ### Feature details — delivery, roll-up & privacy
 
