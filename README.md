@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  Pulse Analytics is a self-hosted, privacy-first web analytics platform. Track pageviews,
-  sessions, events, funnels, retention and more — with no cookies and no third-party trackers,
-  on infrastructure you control.
+  Pulse Analytics is a self-hosted, privacy-first web analytics platform — an alternative to
+  Google Analytics that you run on your own infrastructure. Track pageviews, sessions, events,
+  funnels, retention and more, with no cookies and no third-party trackers.
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@
 
 ## Screenshots
 
-A look at the current interface — home, reporting, experiments and theming.
+The current interface — home, reporting, the AI assistant, experiments and theming.
 
 **Home** — the Pulse summary strip and a card for every site.
 
@@ -67,7 +67,7 @@ A look at the current interface — home, reporting, experiments and theming.
 
 ![Home on a phone — compact layout](docs/screenshots/home-phone.png)
 
-## ✨ Features
+## Features
 
 **Core analytics**
 
@@ -83,10 +83,10 @@ A look at the current interface — home, reporting, experiments and theming.
 - Per-site data-retention controls with automatic cleanup
 - Fully self-hosted — your data never leaves your infrastructure, and the app never phones home
 
-**Added in this version** (full details in the feature notes below)
+**Added in this version** (details in the sections below)
 
 - Rule-based insights and chart annotations
-- Ask Pulse — an AI analytics assistant: ask plain-English questions and get answers computed from your own data, with the query plan shown
+- Ask Pulse — an AI analytics assistant: ask plain-English questions, get answers computed from your own data, with the query plan shown
 - Traffic alerts and scheduled reports — delivered to webhooks, Slack, Discord, Telegram or email
 - A/B testing (Experiments) with statistical-significance testing built in
 - Drag-and-drop custom dashboards and a cross-site roll-up view
@@ -97,58 +97,14 @@ A look at the current interface — home, reporting, experiments and theming.
 
 ### About this build
 
-- **Self-hosted only** — Pulse Analytics never phones home: no update checks, no
-  telemetry, no external calls except the delivery endpoints you configure yourself
-  (webhooks, Slack, Discord, Telegram, email, S3/BigQuery).
-- **Packages** — the API client and the MCP server are published on npm as
-  `@pulselytics/api-client` and `@pulselytics/mcp` (`PulseClient`,
-  `createPulseMcpServer`). The UI component library ships in-tree as
-  `@pulselytics/react-zen` under `packages/react-zen` and is built from source
-  as part of the normal build.
-- **Tracker & API** — the tracking snippet is `window.pulse` / `pulseConfig` with
-  `data-pulse-event*` attributes; API headers are `x-pulse-*`, API keys use the
-  `pulse_` prefix, settings are `PULSE_*` environment variables, and browser
-  storage keys are `pulse.*`.
-- **Design** — the "Midnight Pulse" palette (indigo `#4f46e5` → violet `#7c3aed`),
-  an original logo (see [BRANDING.md](BRANDING.md)), and five switchable colour
-  themes with light, dark and system modes.
+- **Self-hosted only** — Pulse Analytics never phones home: no update checks, no telemetry, no external calls except the delivery endpoints you configure yourself (webhooks, Slack, Discord, Telegram, email, S3/BigQuery).
+- **Packages** — the API client and the MCP server are published on npm as `@pulselytics/api-client` and `@pulselytics/mcp` (`PulseClient`, `createPulseMcpServer`). The UI component library ships in-tree as `@pulselytics/react-zen` under `packages/react-zen` and is built from source as part of the normal build.
+- **Tracker & API** — the tracking snippet is `window.pulse` / `pulseConfig` with `data-pulse-event*` attributes; API headers are `x-pulse-*`, API keys use the `pulse_` prefix, settings are `PULSE_*` environment variables, and browser storage keys are `pulse.*`.
+- **Design** — the "Midnight Pulse" palette (indigo `#4f46e5` → violet `#7c3aed`), an original logo (see [BRANDING.md](BRANDING.md)), and five switchable colour themes with light, dark and system modes.
 
-### Feature details — operator tools
+## Ask Pulse: an AI analytics assistant
 
-New operator/workflow features, implemented additively (new `pulse_*` tables, new
-`/api/pulse/*` routes, a new "Pulse" section in the website sidebar). The new features are
-built and verified against the PostgreSQL deployment of this build.
-
-- **Chart annotations** — annotate the traffic chart (product launches, campaigns) with
-  dated notes; markers render on the Overview chart.
-- **Traffic alerts** — per-website rules (spike/drop/threshold/no-data over pageviews or
-  visitors) delivered to any webhook, with a full evaluation history. Evaluate with
-  `POST /api/pulse/cron/alerts` (localhost, or the `x-cron-secret` header when
-  `CRON_SECRET` is set) — e.g. from system cron: `curl -X POST http://localhost:3000/api/pulse/cron/alerts`.
-- **Scheduled summary reports** — daily/weekly digests (visitors, views, bounce, top
-  pages/referrers/countries + CSV) sent to a webhook, with report history and a
-  "Send now" action. Due schedules run via `POST /api/pulse/cron/reports`. Email
-  recipients can be recorded; actual email sending is config-gated behind
-  `PULSE_SMTP_URL` and is not live-tested in this build.
-- **Data retention & privacy controls** — per-website retention days with a manual
-  cleanup action (deletes old events/sessions and reports the counts), plus event
-  export by date range as CSV/JSON.
-- **CSV importer** — import GA4, Plausible or Matomo exports (plus a generic layout)
-  as real pageviews/sessions that appear in all stats. Sample files live in `samples/`.
-- **Public live badge** — an SVG "visitors today" badge per website, protected by a
-  per-site token, with a preview and embed snippet in the UI.
-- **Webhook event forwarding** — forward accepted tracking events to any webhook in
-  real time (best-effort, never blocks collection), with a delivery log.
-- **Data quality & broken pages** — a report of potential broken pages, their
-  referrers, bounce-heavy pages and spam-referrer flags.
-- **Rule-based insights** — plain-English insight cards computed deterministically
-  from period-over-period data (traffic change, page gainers/losers, referrer
-  drivers, device shifts, annotation correlations). No AI, no external calls.
-
-### Feature details — Ask Pulse (AI analytics assistant)
-
-Ask Pulse answers plain-English questions about a website's analytics, on the
-**Ask Pulse** page in the website sidebar. Examples:
+Ask Pulse answers plain-English questions about a website's analytics, on the **Ask Pulse** page in the website sidebar. Examples:
 
 - "Which pages got the most views this month?"
 - "How many visitors came from Google this week?"
@@ -161,98 +117,49 @@ Ask Pulse answers plain-English questions about a website's analytics, on the
 
 How it works — safety first:
 
-- A question is never turned into free-form SQL. It is converted into a
-  structured **query plan** (intent, metric, breakdown, date range) drawn from a
-  fixed allow-list, and only that plan runs — through the same parameterized
-  data layer as every other report. The plan that ran is shown under each
-  answer, so you can see exactly what was measured.
-- Every number in the explanation comes from the executed result. If a
-  question cannot be mapped to a supported plan, Ask Pulse says so and lists
-  what it can answer, instead of inventing an answer. It is read-only and
-  cannot identify individual visitors.
+- A question is never turned into free-form SQL. It is converted into a structured **query plan** (intent, metric, breakdown, date range) drawn from a fixed allow-list, and only that plan runs — through the same parameterized data layer as every other report. The plan that ran is shown under each answer, so you can see exactly what was measured.
+- Every number in the explanation comes from the executed result. If a question cannot be mapped to a supported plan, Ask Pulse says so and lists what it can answer, instead of inventing an answer. It is read-only and cannot identify individual visitors.
 
 Two modes:
 
-- **Built-in parser (default)** — a deterministic parser built into Pulse
-  covers the supported question types: totals (pageviews, visitors, visits,
-  bounce rate), top pages/referrers/countries/browsers/systems/devices, per-day
-  trends, period-over-period change with the biggest page and referrer movers,
-  and counts for a single referrer — over today, yesterday, a named weekday,
-  the last N days, or this/last week or month. No external calls are made.
-- **LLM mode** — set the `OPENAI_API_KEY` environment variable on the server
-  (optionally `OPENAI_MODEL`, default `gpt-4o-mini`) and questions are first
-  parsed by the model into the same allow-listed plan format. Model output is
-  validated against the allow-list before anything runs; invalid output falls
-  back to the built-in parser. The current mode is shown as a badge on the
-  Ask Pulse page.
+- **Built-in parser (default)** — a deterministic parser built into Pulse covers the supported question types: totals (pageviews, visitors, visits, bounce rate), top pages/referrers/countries/browsers/systems/devices, per-day trends, period-over-period change with the biggest page and referrer movers, and counts for a single referrer — over today, yesterday, a named weekday, the last N days, or this/last week or month. No external calls are made.
+- **LLM mode** — set the `OPENAI_API_KEY` environment variable on the server (optionally `OPENAI_MODEL`, default `gpt-4o-mini`) and questions are first parsed by the model into the same allow-listed plan format. Model output is validated against the allow-list before anything runs; invalid output falls back to the built-in parser. The current mode is shown as a badge on the Ask Pulse page.
 
-### Feature details — delivery, roll-up & privacy
+## Operator tools: alerts, reports, imports
 
-- **Core Web Vitals** — an optional add-on script (`/pulse-vitals.js`, included
-  alongside the standard tracking script) measures LCP, INP, CLS, FCP and TTFB in
-  visitors' browsers and reports them as `pulse.webvital` events. The Web Vitals
-  page shows per-page average + p75 per metric, colour-coded against the standard
-  thresholds (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1), plus a site-wide summary.
-- **Slack / Discord / Telegram delivery** — alert rules and report schedules can
-  deliver to Slack (incoming webhook, Block Kit formatting), Discord (webhook,
-  embed formatting) or Telegram (Bot API, HTML formatting) in addition to generic
-  webhooks. Delivery logs record the channel and HTTP status. For Telegram the API
-  base can be overridden with `PULSE_TELEGRAM_API_BASE` (used for testing).
-- **Cross-site roll-up** — a combined view of every website on the account
-  (linked as "Pulse roll-up" from the Websites page, at `/pulse/overview`):
-  combined visitors/views/visits/bounce, a per-site comparison table and a
-  combined daily trend.
-- **Uptime monitoring** — per-website monitors with status history and incidents.
-  Checks run via `POST /api/pulse/cron/uptime` (same trigger pattern as alerts —
-  point system cron at it at your chosen interval). When a site goes down an
-  incident opens and a notification is sent to the monitor's webhook.
-- **GDPR toolkit** — on the Privacy & Retention page: look up everything stored
-  for one visitor by session ID, export it as JSON, or erase it (with counts of
-  what was deleted), plus a privacy audit panel listing what Pulse stores per
-  visitor. Raw IP addresses are never stored and the tracker sets no cookies.
-- **Revenue tracking** — any custom event whose data includes a numeric
-  `revenue` value (and an optional `currency`) counts as revenue. The Revenue
-  page shows totals, a daily trend, revenue by page and by referrer, and average
-  revenue per visitor, with the tracking snippet documented on the page itself.
+New operator and workflow features, implemented additively (new `pulse_*` tables, new `/api/pulse/*` routes, a new "Pulse" section in the website sidebar), built and verified against the PostgreSQL deployment of this build.
 
-### Feature details — experiments, dashboards & data
+- **Chart annotations** — annotate the traffic chart (product launches, campaigns) with dated notes; markers render on the Overview chart.
+- **Traffic alerts** — per-website rules (spike/drop/threshold/no-data over pageviews or visitors) delivered to any webhook, with a full evaluation history. Evaluate with `POST /api/pulse/cron/alerts` (localhost, or the `x-cron-secret` header when `CRON_SECRET` is set) — e.g. from system cron: `curl -X POST http://localhost:3000/api/pulse/cron/alerts`.
+- **Scheduled summary reports** — daily/weekly digests (visitors, views, bounce, top pages/referrers/countries + CSV) sent to a webhook, with report history and a "Send now" action. Due schedules run via `POST /api/pulse/cron/reports`. Email recipients can be recorded; actual email sending is config-gated behind `PULSE_SMTP_URL` and is not live-tested in this build.
+- **Data retention & privacy controls** — per-website retention days with a manual cleanup action (deletes old events/sessions and reports the counts), plus event export by date range as CSV/JSON.
+- **CSV importer** — import GA4, Plausible or Matomo exports (plus a generic layout) as real pageviews/sessions that appear in all stats. Sample files live in `samples/`.
+- **Public live badge** — an SVG "visitors today" badge per website, protected by a per-site token, with a preview and embed snippet in the UI.
+- **Webhook event forwarding** — forward accepted tracking events to any webhook in real time (best-effort, never blocks collection), with a delivery log.
+- **Data quality & broken pages** — a report of potential broken pages, their referrers, bounce-heavy pages and spam-referrer flags.
+- **Rule-based insights** — plain-English insight cards computed deterministically from period-over-period data (traffic change, page gainers/losers, referrer drivers, device shifts, annotation correlations). No AI, no external calls.
 
-- **A/B testing** — per-website experiments with weighted variants and a chosen
-  conversion event. The optional `/pulse-ab.js` add-on (included alongside the
-  standard tracking script) assigns visitors deterministically, reports an
-  `experiment.exposure` event per assignment, and exposes the variant to your
-  page code. The results page shows exposures, conversions, conversion rate and
-  uplift per variant, plus a pooled two-proportion z-test with a p-value and a
-  "significant at 95%" verdict (with a clear not-enough-data state below 30
-  exposed visitors per variant).
-- **Custom dashboards** — account-level dashboards built from a widget catalog
-  (visitor/view/bounce stats, views trend, top pages/referrers/countries,
-  devices split, revenue total, realtime online count), each bound to a website
-  and period. Widgets are arranged on a grid with drag-and-drop reordering and
-  the layout is persisted per dashboard (linked as "Custom dashboards" from the
-  Websites page, at `/pulse/dashboards`).
-- **Data warehouse export** — per-website export jobs that ship raw events
-  (with event data) as NDJSON or CSV to an S3-compatible bucket (AWS Signature
-  V4 signing — works with AWS S3, MinIO, R2 and similar) or into BigQuery
-  (service-account JWT → OAuth token exchange + streaming insert), with a run
-  history recording rows exported, bytes and status. The BigQuery endpoints can
-  be overridden with `PULSE_BIGQUERY_TOKEN_URL` / `PULSE_BIGQUERY_API_BASE`.
-- **Live event debugger** — a per-website live feed of the newest events
-  (pageviews and custom events) refreshing every few seconds, with an
-  event-name/path filter, expandable raw event data, pause, and a "send test
-  event" button for verifying collection end-to-end.
-- **Public status page** — every website with the live badge enabled also gets
-  a public status page at `/status/<websiteId>`, gated by the same per-site
-  token, showing current status, 24h/30d uptime and the recent check history
-  from uptime monitoring.
-- **Admin audit log** — sensitive operator actions are recorded (visitor data
-  deletion, retention cleanup runs, CSV imports, warehouse export runs and data
-  exports) and listed for admins under Admin → Audit Log, newest first, with
-  filters by action type.
+## Delivery, roll-up and privacy
+
+- **Core Web Vitals** — an optional add-on script (`/pulse-vitals.js`, included alongside the standard tracking script) measures LCP, INP, CLS, FCP and TTFB in visitors' browsers and reports them as `pulse.webvital` events. The Web Vitals page shows per-page average + p75 per metric, colour-coded against the standard thresholds (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1), plus a site-wide summary.
+- **Slack / Discord / Telegram delivery** — alert rules and report schedules can deliver to Slack (incoming webhook, Block Kit formatting), Discord (webhook, embed formatting) or Telegram (Bot API, HTML formatting) in addition to generic webhooks. Delivery logs record the channel and HTTP status. For Telegram the API base can be overridden with `PULSE_TELEGRAM_API_BASE` (used for testing).
+- **Cross-site roll-up** — a combined view of every website on the account (linked as "Pulse roll-up" from the Websites page, at `/pulse/overview`): combined visitors/views/visits/bounce, a per-site comparison table and a combined daily trend.
+- **Uptime monitoring** — per-website monitors with status history and incidents. Checks run via `POST /api/pulse/cron/uptime` (same trigger pattern as alerts — point system cron at it at your chosen interval). When a site goes down an incident opens and a notification is sent to the monitor's webhook.
+- **GDPR toolkit** — on the Privacy & Retention page: look up everything stored for one visitor by session ID, export it as JSON, or erase it (with counts of what was deleted), plus a privacy audit panel listing what Pulse stores per visitor. Raw IP addresses are never stored and the tracker sets no cookies.
+- **Revenue tracking** — any custom event whose data includes a numeric `revenue` value (and an optional `currency`) counts as revenue. The Revenue page shows totals, a daily trend, revenue by page and by referrer, and average revenue per visitor, with the tracking snippet documented on the page itself.
+
+## Experiments, dashboards and data export
+
+- **A/B testing** — per-website experiments with weighted variants and a chosen conversion event. The optional `/pulse-ab.js` add-on (included alongside the standard tracking script) assigns visitors deterministically, reports an `experiment.exposure` event per assignment, and exposes the variant to your page code. The results page shows exposures, conversions, conversion rate and uplift per variant, plus a pooled two-proportion z-test with a p-value and a "significant at 95%" verdict (with a clear not-enough-data state below 30 exposed visitors per variant).
+- **Custom dashboards** — account-level dashboards built from a widget catalog (visitor/view/bounce stats, views trend, top pages/referrers/countries, devices split, revenue total, realtime online count), each bound to a website and period. Widgets are arranged on a grid with drag-and-drop reordering and the layout is persisted per dashboard (linked as "Custom dashboards" from the Websites page, at `/pulse/dashboards`).
+- **Data warehouse export** — per-website export jobs that ship raw events (with event data) as NDJSON or CSV to an S3-compatible bucket (AWS Signature V4 signing — works with AWS S3, MinIO, R2 and similar) or into BigQuery (service-account JWT → OAuth token exchange + streaming insert), with a run history recording rows exported, bytes and status. The BigQuery endpoints can be overridden with `PULSE_BIGQUERY_TOKEN_URL` / `PULSE_BIGQUERY_API_BASE`.
+- **Live event debugger** — a per-website live feed of the newest events (pageviews and custom events) refreshing every few seconds, with an event-name/path filter, expandable raw event data, pause, and a "send test event" button for verifying collection end-to-end.
+- **Public status page** — every website with the live badge enabled also gets a public status page at `/status/<websiteId>`, gated by the same per-site token, showing current status, 24h/30d uptime and the recent check history from uptime monitoring.
+- **Admin audit log** — sensitive operator actions are recorded (visitor data deletion, retention cleanup runs, CSV imports, warehouse export runs and data exports) and listed for admins under Admin → Audit Log, newest first, with filters by action type.
 
 ---
 
-## 🚀 Getting Started
+## Getting started: install Pulse Analytics
 
 ### Requirements
 
@@ -286,9 +193,7 @@ postgresql://username:mypassword@localhost:5432/mydb
 pnpm run build
 ```
 
-The build step will create tables in your database if you are installing for the first time.
-It will also create a login user with username **Admin** and password **Admin**.
-You will be required to change this password after signing in.
+The build step will create tables in your database if you are installing for the first time. It will also create a login user with username **Admin** and password **Admin**. You will be required to change this password after signing in.
 
 ### Start the application
 
@@ -298,20 +203,11 @@ pnpm run start
 
 By default, this will launch the application on `http://localhost:3000`.
 
----
+## Deployment
 
-## 📦 Deployment
+Pulse Analytics is deployed by building from source, as described above: install dependencies with pnpm, set `DATABASE_URL` and `APP_SECRET` in `.env`, run `pnpm run build`, then `pnpm run start`. Container images are not published for this version, and container deployment files are not included in this repository. Run it behind a reverse proxy (or a process manager such as systemd) for production use.
 
-Pulse Analytics is deployed by building from source, as described above: install
-dependencies with pnpm, set `DATABASE_URL` and `APP_SECRET` in `.env`, run
-`pnpm run build`, then `pnpm run start`. Container images are not published for
-this version, and container deployment files are not included in this repository.
-Run it behind a reverse proxy (or a process manager such as systemd) for
-production use.
-
----
-
-## 🔄 Getting Updates
+## Getting updates
 
 ```bash
 git pull
@@ -319,9 +215,26 @@ pnpm install
 pnpm build
 ```
 
----
+## FAQ
 
-## 📄 License
+**Is Pulse Analytics free?**
+Yes — it is MIT-licensed open source. You run it on your own server with your own PostgreSQL database; there is no hosted tier, no account with us, and nothing to phone home to.
 
-MIT — see [LICENSE](LICENSE). The license and the original copyright notice of the Umami
-project are retained unchanged, as the MIT License requires.
+**Does Pulse Analytics use cookies?**
+No. The tracker sets no cookies and collects no personal data. Visitors are recognised by a salted hash that rotates daily, raw IP addresses are never stored, and the GDPR toolkit can look up, export or erase everything stored for a single visitor.
+
+**How is Pulse different from Google Analytics?**
+Ownership and privacy. Your analytics live in your database on your infrastructure, not on an ad platform; there are no cookies to banner about, no third-party trackers, and no sampling. And when you outgrow the standard reports, Pulse adds alerts, experiments, uptime monitoring, warehouse export and an AI assistant that answers from your own data.
+
+**Can I migrate from GA4, Plausible or Matomo?**
+Yes — the CSV importer brings GA4, Plausible and Matomo exports (plus a generic layout) in as real pageviews and sessions that appear across all stats. Sample files are in `samples/`.
+
+**What do I need to run it?**
+Node.js 20.19+ (22 LTS recommended), PostgreSQL 12.14+, and pnpm. It builds and runs from source — no container images are published for this version.
+
+**What is Ask Pulse, and does it send my data to an AI company?**
+Ask Pulse answers plain-English questions from your analytics. By default it uses a built-in deterministic parser and makes no external calls at all. If you set `OPENAI_API_KEY`, questions are first parsed by that model into the same allow-listed query plans — the model never writes SQL, and every answer is computed from your database by Pulse itself.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The license and the original copyright notice of the Umami project are retained unchanged, as the MIT License requires.
