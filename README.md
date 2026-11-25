@@ -166,6 +166,50 @@ New operator and workflow features, implemented additively (new `pulse_*` tables
 - A server with Node.js version 20.19+ (22 LTS recommended).
 - A PostgreSQL database version v12.14+.
 
+For the Docker install below, you only need Docker with the Compose plugin. Node.js and PostgreSQL run inside the containers.
+
+### Install with Docker
+
+**Option 1: Docker Compose, app and database together**
+
+```bash
+git clone https://github.com/Abhisheklang/pulse-analytics.git
+cd pulse-analytics
+cp .env.docker.example .env
+```
+
+Edit `.env` and set a real `POSTGRES_PASSWORD` and `APP_SECRET` (generate one with `openssl rand -hex 32`). The password inside `DATABASE_URL` must match `POSTGRES_PASSWORD`.
+
+```bash
+docker compose up -d
+```
+
+This builds the application image, starts PostgreSQL 16, creates the database tables on first start, and serves Pulse Analytics on `http://localhost:3000`. Sign in with username **Admin** and password **Admin**, and change the password when asked. Database files are kept in a named Docker volume, so they survive container restarts and image updates.
+
+**Option 2: Pull the published image**
+
+Every push to the `main` branch publishes an image to the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/abhisheklang/pulse-analytics:latest
+```
+
+The image needs a PostgreSQL database (v12.14 or later) to connect to. For a quick local run with a companion database container:
+
+```bash
+docker network create pulse
+docker run -d --name pulse-db --network pulse \
+  -e POSTGRES_USER=pulse -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=pulse \
+  -v pulse-db:/var/lib/postgresql/data \
+  postgres:16
+docker run -d --name pulse --network pulse -p 3000:3000 \
+  -e DATABASE_URL=postgresql://pulse:changeme@pulse-db:5432/pulse \
+  -e APP_SECRET=replace-with-a-random-string \
+  ghcr.io/abhisheklang/pulse-analytics:latest
+```
+
+On start, the container checks the database connection and applies any pending database migrations before serving. To update, pull the new image and recreate the container; your data stays in the database.
+
 ### Install from source
 
 ```bash
@@ -205,7 +249,7 @@ By default, this will launch the application on `http://localhost:3000`.
 
 ## Deployment
 
-Pulse Analytics is deployed by building from source, as described above: install dependencies with pnpm, set `DATABASE_URL` and `APP_SECRET` in `.env`, run `pnpm run build`, then `pnpm run start`. Container images are not published for this version, and container deployment files are not included in this repository. Run it behind a reverse proxy (or a process manager such as systemd) for production use.
+Pulse Analytics can be deployed in two ways. From source: install dependencies with pnpm, set `DATABASE_URL` and `APP_SECRET` in `.env`, run `pnpm run build`, then `pnpm run start`. With Docker: use the Compose file included in this repository, or the published image at `ghcr.io/abhisheklang/pulse-analytics`, as described in Install with Docker above. Either way, run it behind a reverse proxy (or, for source installs, a process manager such as systemd) for production use.
 
 ## Getting updates
 

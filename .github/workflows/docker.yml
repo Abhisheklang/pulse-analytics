@@ -1,0 +1,82 @@
+name: Docker
+
+# Builds the Pulse Analytics container image, starts the full Compose
+# stack (app plus PostgreSQL), and waits until the app answers HTTP 200.
+# On pushes to main, the tested image is also published to the GitHub
+# Container Registry as ghcr.io/abhisheklang/pulse-analytics.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE: ghcr.io/abhisheklang/pulse-analytics
+      APP_SECRET: ci-test-secret-not-for-production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE }}:latest
+
+      - name: Check the image has production dependencies only
+        run: |
+          docker run --rm --entrypoint /bin/sh ${{ env.IMAGE }}:latest -c \
+            "test ! -e /app/node_modules/vitest && test ! -e /app/node_modules/typescript && echo 'production deps only: OK'"
+
+      - name: Start the Compose stack
+        run: docker compose up -d
+
+      - name: Wait for the app to answer HTTP 200
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -sL -o /dev/null -w "%{http_code}" http://localhost:3000/ || true)
+            echo "attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "App is up."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "App did not return HTTP 200 in time."
+          exit 1
+
+      - name: Show Compose logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop the Compose stack
+        if: always()
+        run: docker compose down -v
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag ${{ env.IMAGE }}:latest ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:latest
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
