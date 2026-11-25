@@ -34,5 +34,23 @@ extracted from DB-bound modules into pure exported helpers
 `deriveSigV4SigningKey`, `badgeSvg`, `retentionCutoff`, `isJobDue`); the
 production code paths call the same helpers the tests assert on.
 
-Database- and network-bound behavior (the scheduler's lease, SMTP delivery,
-API routes) is verified end-to-end against the running app instead of here.
+## API route tests
+
+Four suites exercise the real Next.js route handlers for the custom Pulse
+features, with the request/auth layer, the permission checks and the Prisma
+client behind `pulseDb()` mocked (the pattern used by the repository's other
+route tests, for example `src/app/api/auth/login/route.test.ts`). No live
+database, no network, no LLM key: the Ask Pulse suite removes
+`OPENAI_API_KEY` so the assistant runs on its deterministic built-in parser,
+and its answers are computed from the mocked data layer for real.
+
+| Suite | Routes | Covers |
+| --- | --- | --- |
+| `api-ask.test.ts` | `ask` | Built-in mode reporting, a pageviews answer computed from mocked events, an honest refusal, view-permission rejection, request validation passthrough |
+| `api-alerts.test.ts` | `alerts` | Rule and log listing, webhook rule creation, Telegram and webhook-channel validation rejections, enable/disable toggle, missing rule |
+| `api-experiments.test.ts` | `experiments` | Listing, creation with variant normalisation (first variant forced to control) and real results computation over empty event tables, duplicate experiment key, duplicate variant keys |
+| `api-privacy.test.ts` | `privacy`, `privacy/visitor` | GDPR toolkit: setting with data range and counts, default setting creation, retention update, visitor lookup with flattened event data, full visitor erasure across tables with an audit entry, not-found and permission rejections |
+
+Database- and network-bound behavior beyond these routes (the scheduler's
+lease, SMTP and webhook delivery, the remaining routes) is verified
+end-to-end against the running app instead of here.

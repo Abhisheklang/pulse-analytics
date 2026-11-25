@@ -56,6 +56,7 @@
     "test:api:coverage": "tsx scripts/test-api.ts --coverage-report",
     "db:seed": "tsx scripts/seed-data.ts",
     "lint": "biome lint .",
+    "lint:pulse": "biome lint src/lib/pulse src/app/api/pulse packages/api-client/src packages/mcp/src",
     "lint:i18n": "eloqnt lint",
     "format": "biome format --write .",
     "check": "biome check --write",

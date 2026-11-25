@@ -48,8 +48,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Lint is scoped to the Pulse custom code (src/lib/pulse, the Pulse API
+      # routes and the two published packages). A full-repo biome lint still
+      # reports pre-existing errors in vendored and static files inherited
+      # from the base project, so it is not a CI gate yet.
+      - name: Lint Pulse code
+        run: pnpm lint:pulse
+
       - name: Build
         run: pnpm build
 
       - name: Run Pulse unit tests
         run: pnpm test:pulse
+
+      # Runs after the build because the MCP package tests resolve the
+      # API client through its built output.
+      - name: Run package tests
+        run: pnpm test:packages

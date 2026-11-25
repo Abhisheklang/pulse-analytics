@@ -31,6 +31,35 @@
 > See [LICENSE](LICENSE) for the original license and copyright notice, which are retained
 > unchanged.
 
+## What I built
+
+Pulse Analytics is a modified, rebranded build of an existing open-source analytics
+project, used under the MIT License (see Attribution above). The base platform provides
+the core tracking, storage and reporting engine. Everything listed in this section is my
+own work, added on top of that base:
+
+- **The rebrand itself** - a new name, logo, palette and UI copy throughout, plus two
+  published npm packages: `@pulselytics/api-client` and `@pulselytics/mcp`.
+- **Ask Pulse** - plain-English questions answered from the site's own analytics data.
+  A deterministic built-in parser converts each question into an allow-listed query plan
+  (no free-form SQL), with an optional LLM mode that produces the same plan format.
+- **Operator tools** - traffic alerts delivered to webhooks, Slack, Telegram, Discord or
+  email; scheduled reports; a CSV importer for GA4, Plausible and Matomo exports;
+  webhooks; and a built-in scheduler.
+- **Analysis additions** - chart annotations, rule-based insights, Core Web Vitals
+  tracking, revenue tracking, a cross-site roll-up dashboard, drag-and-drop custom
+  dashboards, and A/B testing (Experiments) with significance testing.
+- **Privacy and admin** - a GDPR toolkit (per-visitor lookup, export and erasure, plus
+  retention controls with automatic cleanup), a live "visitors today" badge, an admin
+  audit log, and an onboarding wizard.
+- **Monitoring and data out** - uptime checks with a public status page, data-warehouse
+  export to S3 or BigQuery, and a live event debugger.
+- **The Pulse redesign** - light, dark and system modes, five colour presets, and a
+  responsive layout with a phone navigation drawer.
+- **Docker install** - a Dockerfile and Compose stack for the app and PostgreSQL, with a
+  CI workflow that builds the image, runs the full stack as a test, and publishes it to
+  the GitHub Container Registry.
+
 ## Screenshots
 
 The current interface — home, reporting, the AI assistant, experiments and theming.
