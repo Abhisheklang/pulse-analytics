@@ -25,7 +25,9 @@ export function PulseOnboardingBanner() {
       wrap="wrap"
       style={{
         border: '1px solid var(--zen-primary, #4f46e5)',
-        background: '#eef2ff',
+        // Preset tint token, never a fixed hex: it composites over the page
+        // surface, so the banner follows light/dark mode and every preset.
+        background: 'var(--pulse-accent-soft)',
         borderRadius: 'var(--pulse-radius-card)',
         padding: '12px 16px',
       }}
