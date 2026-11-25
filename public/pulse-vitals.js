@@ -33,6 +33,7 @@
 
   var values = {}; // metric -> latest value
   var reported = {};
+  var nav;
 
   function report(metric, value) {
     values[metric] = value;
@@ -76,8 +77,9 @@
   }
 
   function observe(type, callback, options) {
+    var po;
     try {
-      var po = new PerformanceObserver(callback);
+      po = new PerformanceObserver(callback);
       po.observe(Object.assign({ type: type, buffered: true }, options || {}));
       return po;
     } catch (e) {
@@ -87,7 +89,7 @@
 
   // TTFB + FCP from navigation / paint timing
   try {
-    var nav = performance.getEntriesByType('navigation')[0];
+    nav = performance.getEntriesByType('navigation')[0];
     if (nav) report('ttfb', nav.responseStart);
   } catch (e) {}
   observe('paint', function (list) {
@@ -131,11 +133,12 @@
   var interactions = {};
   observe('event', function (list) {
     list.getEntries().forEach(function (entry) {
+      var worst;
       if (!entry.interactionId) return;
       var current = interactions[entry.interactionId] || 0;
       if (entry.duration > current) {
         interactions[entry.interactionId] = entry.duration;
-        var worst = 0;
+        worst = 0;
         Object.keys(interactions).forEach(function (id) {
           if (interactions[id] > worst) worst = interactions[id];
         });

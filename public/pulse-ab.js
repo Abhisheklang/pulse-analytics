@@ -32,7 +32,8 @@
 
   function hashString(str) {
     var h = 5381;
-    for (var i = 0; i < str.length; i++) {
+    var i;
+    for (i = 0; i < str.length; i++) {
       h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
     }
     return h;
@@ -40,8 +41,9 @@
 
   function visitorId() {
     var key = 'pulse-ab-visitor';
+    var id;
     try {
-      var id = window.localStorage.getItem(key);
+      id = window.localStorage.getItem(key);
       if (!id) {
         id =
           'v' +
@@ -84,8 +86,10 @@
 
   function assign(experiment, vid) {
     var storeKey = 'pulse-ab-' + experiment.key;
+    var stored;
+    var i;
     try {
-      var stored = window.localStorage.getItem(storeKey);
+      stored = window.localStorage.getItem(storeKey);
       if (stored) return stored;
     } catch (e) {
       /* fall through to deterministic assignment */
@@ -99,7 +103,7 @@
 
     var bucket = hashString(websiteId + ':' + experiment.key + ':' + vid) % total;
     var chosen = experiment.variants[experiment.variants.length - 1].key;
-    for (var i = 0; i < experiment.variants.length; i++) {
+    for (i = 0; i < experiment.variants.length; i++) {
       bucket -= experiment.variants[i].weight || 0;
       if (bucket < 0) {
         chosen = experiment.variants[i].key;

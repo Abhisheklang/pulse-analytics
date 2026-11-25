@@ -47,11 +47,9 @@ export default async function ({ children }) {
         <meta name="robots" content="noindex,nofollow" />
         {/* Apply the saved Pulse colour preset and animation preference
             before first paint (no flash of the wrong theme or motion). */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var v=localStorage.getItem('pulse.color-theme');if(v){var t=JSON.parse(v);if(typeof t==='string'&&t){document.documentElement.setAttribute('data-pulse-theme',t);}}var a=localStorage.getItem('pulse.animations');var off=false;if(a){off=JSON.parse(a)==='off';}else if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){off=true;}document.documentElement.setAttribute('data-pulse-motion',off?'off':'on');}catch(e){}})();`,
-          }}
-        />
+        <script>
+          {`(function(){try{var v=localStorage.getItem('pulse.color-theme');if(v){var t=JSON.parse(v);if(typeof t==='string'&&t){document.documentElement.setAttribute('data-pulse-theme',t);}}var a=localStorage.getItem('pulse.animations');var off=false;if(a){off=JSON.parse(a)==='off';}else if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){off=true;}document.documentElement.setAttribute('data-pulse-motion',off?'off':'on');}catch(e){}})();`}
+        </script>
       </head>
       <body>
         <Suspense>

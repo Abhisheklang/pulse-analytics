@@ -48,12 +48,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Lint is scoped to the Pulse custom code (src/lib/pulse, the Pulse API
-      # routes and the two published packages). A full-repo biome lint still
-      # reports pre-existing errors in vendored and static files inherited
-      # from the base project, so it is not a CI gate yet.
-      - name: Lint Pulse code
-        run: pnpm lint:pulse
+      # Full-repo lint is a gate: `biome lint .` reports 0 errors as of the
+      # 2026-11-25 cleanup that fixed the last pre-existing errors in the
+      # inherited vendored and static files. The scoped `pnpm lint:pulse`
+      # script remains available for quick local checks.
+      - name: Lint
+        run: pnpm lint
 
       - name: Build
         run: pnpm build

@@ -2,7 +2,7 @@
 import { Flexbox } from '@pulselytics/react-zen';
 import { useMessages } from '@/components/hooks';
 
-export default function () {
+export default function NotFound() {
   const { t, labels } = useMessages();
 
   return (
