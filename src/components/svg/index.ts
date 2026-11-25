@@ -13,6 +13,7 @@ export { default as Flag } from './Flag';
 export { default as Funnel } from './Funnel';
 export { default as Gauge } from './Gauge';
 export { default as Gear } from './Gear';
+export { default as Github } from './Github';
 export { default as Lightbulb } from './Lightbulb';
 export { default as Lightning } from './Lightning';
 export { default as Location } from './Location';
