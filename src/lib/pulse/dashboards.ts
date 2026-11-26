@@ -50,8 +50,14 @@ const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
 async function dailyTrend(websiteId: string, startAt: Date, endAt: Date) {
   const db = pulseDb();
+  // COR-1: bucket by UTC calendar day starting at the UTC midnight of
+  // the first day. Stepping 24h increments from a non-midnight start
+  // merged two partial days into the first bucket under one date label.
+  const start = new Date(
+    Date.UTC(startAt.getUTCFullYear(), startAt.getUTCMonth(), startAt.getUTCDate()),
+  );
   const events = await db.websiteEvent.findMany({
-    where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
+    where: { websiteId, eventType: 1, createdAt: { gte: start, lt: endAt } },
     select: { createdAt: true },
     take: 200000,
   });
@@ -63,7 +69,7 @@ async function dailyTrend(websiteId: string, startAt: Date, endAt: Date) {
   }
 
   const days: { date: string; pageviews: number }[] = [];
-  for (let t = startAt.getTime(); t < endAt.getTime(); t += 86400_000) {
+  for (let t = start.getTime(); t < endAt.getTime(); t += 86400_000) {
     const day = new Date(t).toISOString().slice(0, 10);
     days.push({ date: day, pageviews: byDay.get(day) || 0 });
   }

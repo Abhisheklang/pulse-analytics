@@ -1,4 +1,4 @@
-import { getPeriodStats, getSessionDimensionCounts, getTopGrouped, MAX_PERIOD_EVENTS, pulseDb } from './stats';
+import { getPeriodStats, MAX_PERIOD_EVENTS, pulseDb } from './stats';
 
 // ---- Ask Pulse: plain-English analytics questions -> SAFE query plans ----
 //
@@ -96,12 +96,21 @@ export const ASK_CAPABILITIES = [
 
 const DAY_MS = 86400_000;
 
+// COR-1: all Ask Pulse day boundaries are UTC. Buckets are keyed by UTC
+// date (toISOString) and events are bucketed by their UTC date, so the
+// range itself must start at a UTC midnight; a server-local midnight
+// shifted every bucket key and silently dropped boundary-day events.
 function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
 function fmtDay(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 /** Pure: resolve a plan's range to concrete [start, end) bounds plus the
@@ -126,38 +135,38 @@ export function resolveRange(plan: Pick<QueryPlan, 'range' | 'days' | 'weekday'>
       break;
     }
     case 'specificDay': {
-      const target = plan.weekday ?? now.getDay();
-      let daysAgo = (now.getDay() - target + 7) % 7;
+      const target = plan.weekday ?? now.getUTCDay();
+      let daysAgo = (now.getUTCDay() - target + 7) % 7;
       if (daysAgo === 0) daysAgo = 7;
       start = new Date(today.getTime() - daysAgo * DAY_MS);
       end = new Date(start.getTime() + DAY_MS);
-      const name = start.toLocaleDateString('en-US', { weekday: 'long' });
+      const name = start.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
       label = `${name} ${fmtDay(start)}`;
       break;
     }
     case 'thisWeek': {
-      const dow = (today.getDay() + 6) % 7; // Monday = 0
+      const dow = (today.getUTCDay() + 6) % 7; // Monday = 0
       start = new Date(today.getTime() - dow * DAY_MS);
       end = new Date(today.getTime() + DAY_MS);
       label = `this week (from ${fmtDay(start)})`;
       break;
     }
     case 'lastWeek': {
-      const dow = (today.getDay() + 6) % 7;
+      const dow = (today.getUTCDay() + 6) % 7;
       end = new Date(today.getTime() - dow * DAY_MS);
       start = new Date(end.getTime() - 7 * DAY_MS);
       label = `last week (${fmtDay(start)} – ${fmtDay(new Date(end.getTime() - DAY_MS))})`;
       break;
     }
     case 'thisMonth': {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
       end = new Date(today.getTime() + DAY_MS);
       label = `this month (from ${fmtDay(start)})`;
       break;
     }
     case 'lastMonth': {
-      start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      end = new Date(today.getFullYear(), today.getMonth(), 1);
+      start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
+      end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
       label = `last month (${fmtDay(start)} – ${fmtDay(new Date(end.getTime() - DAY_MS))})`;
       break;
     }
@@ -420,6 +429,92 @@ async function groupedCounts(
   return map;
 }
 
+/** COR-2: rank groups by the REQUESTED metric. The previous top branch
+ *  always counted pageview events (or sessions for session dimensions)
+ *  regardless of the metric in the plan, then labelled the numbers with
+ *  the requested metric. Groups are aggregated in memory from the
+ *  period's pageview events, capped like the other Pulse aggregations. */
+async function topByMetric(
+  websiteId: string,
+  startAt: Date,
+  endAt: Date,
+  dimension: AskDimension,
+  metric: AskMetric,
+  limit: number,
+): Promise<AskRow[]> {
+  const db = pulseDb();
+
+  let sessionNames: Map<string, string> | null = null;
+  if (
+    dimension === 'country' ||
+    dimension === 'browser' ||
+    dimension === 'os' ||
+    dimension === 'device'
+  ) {
+    const sessions = await db.session.findMany({
+      where: { websiteId, createdAt: { gte: startAt, lt: endAt } },
+      select: { id: true, [dimension]: true },
+      take: MAX_PERIOD_EVENTS,
+    });
+    sessionNames = new Map(
+      (sessions as any[]).map(s => [s.id, s[dimension] || 'Unknown']),
+    );
+  }
+
+  const events = await db.websiteEvent.findMany({
+    where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
+    select: { sessionId: true, visitId: true, urlPath: true, referrerDomain: true },
+    take: MAX_PERIOD_EVENTS,
+  });
+
+  interface Group {
+    pageviews: number;
+    sessions: Set<string>;
+    visits: Set<string>;
+    perSession: Map<string, number>;
+  }
+  const groups = new Map<string, Group>();
+  for (const e of events as any[]) {
+    const name =
+      dimension === 'page'
+        ? e.urlPath || '(direct)'
+        : dimension === 'referrer'
+          ? e.referrerDomain || '(direct)'
+          : sessionNames?.get(e.sessionId) || 'Unknown';
+    let g = groups.get(name);
+    if (!g) {
+      g = { pageviews: 0, sessions: new Set(), visits: new Set(), perSession: new Map() };
+      groups.set(name, g);
+    }
+    g.pageviews++;
+    g.sessions.add(e.sessionId);
+    g.visits.add(e.visitId);
+    g.perSession.set(e.sessionId, (g.perSession.get(e.sessionId) || 0) + 1);
+  }
+
+  const value = (g: Group): number => {
+    switch (metric) {
+      case 'visitors':
+        return g.sessions.size;
+      case 'visits':
+        return g.visits.size;
+      case 'bounceRate': {
+        if (!g.sessions.size) return 0;
+        let single = 0;
+        for (const count of g.perSession.values()) if (count === 1) single++;
+        return Math.round((single / g.sessions.size) * 100);
+      }
+      default:
+        return g.pageviews;
+    }
+  };
+
+  return [...groups.entries()]
+    .map(([name, g]) => ({ name, value: value(g) }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
+}
+
 /** Execute a validated plan against the site's real data. Only allow-listed
  *  fields and the existing parameterized Prisma helpers are used. */
 export async function executePlan(websiteId: string, plan: QueryPlan, now: Date = new Date()): Promise<AskResult> {
@@ -429,12 +524,27 @@ export async function executePlan(websiteId: string, plan: QueryPlan, now: Date 
   if (plan.intent === 'trend') {
     const events = await pulseDb().websiteEvent.findMany({
       where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
-      select: { createdAt: true, sessionId: true },
+      select: { createdAt: true, sessionId: true, visitId: true },
       take: MAX_PERIOD_EVENTS,
     });
-    const byDay = new Map<string, { pageviews: number; sessions: Set<string> }>();
+    // COR-2: every metric is computed per day, not just visitors vs
+    // pageviews. Visits need the visit id and bounce rate needs the
+    // per-session pageview count within the day.
+    interface DayBucket {
+      pageviews: number;
+      sessions: Set<string>;
+      visits: Set<string>;
+      perSession: Map<string, number>;
+    }
+    const newBucket = (): DayBucket => ({
+      pageviews: 0,
+      sessions: new Set(),
+      visits: new Set(),
+      perSession: new Map(),
+    });
+    const byDay = new Map<string, DayBucket>();
     for (let t = startAt.getTime(); t < endAt.getTime(); t += DAY_MS) {
-      byDay.set(new Date(t).toISOString().slice(0, 10), { pageviews: 0, sessions: new Set() });
+      byDay.set(new Date(t).toISOString().slice(0, 10), newBucket());
     }
     for (const e of events as any[]) {
       const key = new Date(e.createdAt).toISOString().slice(0, 10);
@@ -442,40 +552,53 @@ export async function executePlan(websiteId: string, plan: QueryPlan, now: Date 
       if (bucket) {
         bucket.pageviews++;
         bucket.sessions.add(e.sessionId);
+        bucket.visits.add(e.visitId);
+        bucket.perSession.set(e.sessionId, (bucket.perSession.get(e.sessionId) || 0) + 1);
       }
     }
+    const dayValue = (b: DayBucket): number => {
+      switch (plan.metric) {
+        case 'visitors':
+          return b.sessions.size;
+        case 'visits':
+          return b.visits.size;
+        case 'bounceRate': {
+          if (!b.sessions.size) return 0;
+          let single = 0;
+          for (const count of b.perSession.values()) if (count === 1) single++;
+          return Math.round((single / b.sessions.size) * 100);
+        }
+        default:
+          return b.pageviews;
+      }
+    };
     const rows: AskRow[] = [...byDay.entries()].map(([day, v]) => ({
       name: day,
-      value: plan.metric === 'visitors' ? v.sessions.size : v.pageviews,
+      value: dayValue(v),
     }));
-    return { rows, total: rows.reduce((a, r) => a + r.value, 0) };
+    // A bounce-rate trend has no meaningful summed total; report the
+    // period bounce rate instead of adding daily percentages.
+    const total =
+      plan.metric === 'bounceRate'
+        ? (await getPeriodStats(websiteId, startAt, endAt)).bounceRate
+        : rows.reduce((a, r) => a + r.value, 0);
+    return { rows, total };
   }
 
   if (plan.intent === 'top') {
-    let rows: AskRow[] = [];
-    if (plan.dimension === 'page') {
-      rows = (await getTopGrouped(websiteId, startAt, endAt, 'urlPath', plan.limit)).map(r => ({
-        name: r.name,
-        value: r.count,
-      }));
-    } else if (plan.dimension === 'referrer') {
-      rows = (await getTopGrouped(websiteId, startAt, endAt, 'referrerDomain', plan.limit)).map(r => ({
-        name: r.name,
-        value: r.count,
-      }));
-    } else if (
-      plan.dimension === 'country' ||
-      plan.dimension === 'browser' ||
-      plan.dimension === 'os' ||
-      plan.dimension === 'device'
-    ) {
-      const map = await getSessionDimensionCounts(websiteId, startAt, endAt, plan.dimension);
-      rows = [...map.entries()]
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, plan.limit);
-    }
-    return { rows, total: rows.reduce((a, r) => a + r.value, 0) };
+    const rows = await topByMetric(
+      websiteId,
+      startAt,
+      endAt,
+      plan.dimension,
+      plan.metric,
+      plan.limit,
+    );
+    // COR-2: the total is the site-wide total of the requested metric
+    // for the period, not the sum of the top-N rows, so the share in
+    // the explanation is a share of the whole period.
+    const stats = await getPeriodStats(websiteId, startAt, endAt);
+    return { rows, total: metricOf(stats, plan.metric) };
   }
 
   if (plan.intent === 'compare') {
@@ -566,8 +689,11 @@ export function explainResult(plan: QueryPlan, result: AskResult, rangeLabel: st
       return `No ${plan.dimension} data was recorded for ${rangeLabel} — there is nothing to rank yet.`;
     }
     const top = result.rows[0];
+    if (plan.metric === 'bounceRate') {
+      return `For ${rangeLabel}, the highest bounce rate is ${top.name} at ${top.value}%. The table below shows the ranked rows.`;
+    }
     const share = result.total ? Math.round((top.value / result.total) * 100) : 0;
-    return `For ${rangeLabel}, the top ${plan.dimension} is ${top.name} with ${top.value} ${metric} — ${share}% of the ${result.total} counted across the ${result.rows.length} rows below.`;
+    return `For ${rangeLabel}, the top ${plan.dimension} is ${top.name} with ${top.value} ${metric} — ${share}% of the ${result.total} ${metric} recorded in the period.`;
   }
 
   if (plan.intent === 'compare') {
