@@ -6,7 +6,7 @@ import { pulseDb } from './stats';
 // Steps are auto-detected from real account data wherever possible:
 //   1. passwordChanged — the account no longer uses the default password
 //      (seed-hash comparison for the system admin, bcrypt comparison against
-//      the well-known default for everyone else, plus a stored override flag)
+//      the well-known default for everyone else; never client-asserted)
 //   2. websiteCreated — the account owns/created at least one website
 //      (admins administer all websites, so any website counts for them)
 //   3. snippetInstalled — confirmed manually, or proven by step 4
@@ -45,8 +45,11 @@ export async function getOnboardingState(user: {
   const websiteIds = websites.map((w: any) => w.id);
   const websiteId = websiteIds[0] || null;
 
-  let passwordChanged = !!record?.passwordChanged;
-  if (!passwordChanged && userRow?.password) {
+  // FIN-5: the password step is only ever auto-detected from the real
+  // password hash. It previously also trusted a stored flag that the
+  // client could set on itself through the onboarding PUT body.
+  let passwordChanged = false;
+  if (userRow?.password) {
     const stillDefault =
       hasDefaultPassword(userRow as any) || checkPassword('Admin', userRow.password);
     passwordChanged = !stillDefault;
@@ -95,7 +98,7 @@ export async function getOnboardingState(user: {
 
 export async function updateOnboarding(
   userId: string,
-  patch: { dismissed?: boolean; passwordChanged?: boolean; snippetConfirmed?: boolean },
+  patch: { dismissed?: boolean; snippetConfirmed?: boolean },
 ) {
   const db = pulseDb();
   await db.pulseOnboarding.upsert({

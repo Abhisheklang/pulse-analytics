@@ -5,7 +5,6 @@ import { json, unauthorized } from '@/lib/response';
 
 const updateSchema = z.object({
   dismissed: z.boolean().optional(),
-  passwordChanged: z.boolean().optional(),
   snippetConfirmed: z.boolean().optional(),
 });
 

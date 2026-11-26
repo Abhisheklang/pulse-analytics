@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { decrypt, encrypt, getSalt, hash, md5, uuid } from './crypto';
+import { decrypt, encrypt, getSalt, hash, uuid } from './crypto';
 
 describe('encrypt/decrypt', () => {
   test('round-trips a value with the same secret', () => {
@@ -47,16 +47,6 @@ describe('hash', () => {
 
   test('changes when input changes', () => {
     expect(hash('a')).not.toBe(hash('b'));
-  });
-});
-
-describe('md5', () => {
-  test('is deterministic for the same input', () => {
-    expect(md5('a', 'b')).toBe(md5('a', 'b'));
-  });
-
-  test('returns a 32-char hex string', () => {
-    expect(md5('pulse')).toMatch(/^[0-9a-f]{32}$/);
   });
 });
 

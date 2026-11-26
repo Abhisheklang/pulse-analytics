@@ -50,10 +50,6 @@ export function hash(...args: string[]) {
   return crypto.createHash(HASH_ALGO).update(args.join('')).digest(HASH_ENCODING);
 }
 
-export function md5(...args: string[]) {
-  return crypto.createHash('md5').update(args.join('')).digest('hex');
-}
-
 export function secret() {
   return hash(getAppSecret());
 }
