@@ -19,10 +19,11 @@ async function startSmtpServer(): Promise<number> {
     let authStep = 0;
     socket.on('data', chunk => {
       buffer += chunk.toString('utf8');
-      let idx;
-      while ((idx = buffer.indexOf('\r\n')) >= 0) {
+      let idx = buffer.indexOf('\r\n');
+      while (idx >= 0) {
         const line = buffer.slice(0, idx);
         buffer = buffer.slice(idx + 2);
+        idx = buffer.indexOf('\r\n');
         if (inData) {
           if (line === '.') {
             inData = false;
