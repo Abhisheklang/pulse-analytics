@@ -1,8 +1,51 @@
 import { uuid } from '@/lib/crypto';
 import { deliverToChannel } from './deliver';
 import { pulseDb } from './stats';
+import { checkPublicUrl } from './url-guard';
 
 const db = () => pulseDb();
+
+const MAX_REDIRECTS = 5;
+
+// SSRF-guarded GET for uptime monitors: the monitor URL is user-supplied,
+// so redirects are followed manually and every hop (including each
+// redirect target) is re-checked against the public-address guard.
+async function fetchMonitorUrl(startUrl: string): Promise<{ status: number }> {
+  let currentUrl = startUrl;
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const blocked = await checkPublicUrl(currentUrl);
+    if (blocked) throw new Error(blocked);
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    let res: Response;
+    try {
+      res = await fetch(currentUrl, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: controller.signal,
+        headers: { 'user-agent': 'PulseUptimeCheck/1.0' },
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const location = res.headers.get('location');
+    // Drain the body so the socket can close cleanly.
+    await res.text().catch(() => '');
+
+    if (res.status >= 300 && res.status < 400 && location) {
+      if (hop === MAX_REDIRECTS) throw new Error('Too many redirects');
+      currentUrl = new URL(location, currentUrl).toString();
+      continue;
+    }
+
+    return { status: res.status };
+  }
+
+  throw new Error('Too many redirects');
+}
 
 export async function performCheck(monitor: any) {
   const started = Date.now();
@@ -11,20 +54,10 @@ export async function performCheck(monitor: any) {
   let error: string | null = null;
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(monitor.url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: controller.signal,
-      headers: { 'user-agent': 'PulseUptimeCheck/1.0' },
-    });
-    clearTimeout(timer);
-    status = res.status;
+    const result = await fetchMonitorUrl(monitor.url);
+    status = result.status;
     up = status >= 200 && status < 400;
     if (!up) error = `HTTP ${status}`;
-    // Drain the body so the socket can close cleanly.
-    await res.text().catch(() => '');
   } catch (e: any) {
     error = e?.name === 'AbortError' ? 'timeout after 10s' : String(e?.message || e);
   }

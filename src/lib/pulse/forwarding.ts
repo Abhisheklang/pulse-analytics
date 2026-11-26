@@ -1,5 +1,6 @@
 import { uuid } from '@/lib/crypto';
 import { pulseDb } from './stats';
+import { checkPublicUrl } from './url-guard';
 
 const db = () => pulseDb();
 
@@ -38,22 +39,30 @@ export async function forwardEvent(payload: ForwardPayload): Promise<void> {
     let ok = false;
     let error: string | undefined;
 
-    try {
-      const res = await fetch(config.url, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(config.secret ? { 'x-pulse-secret': config.secret } : {}),
-        },
-        body: JSON.stringify({ source: 'pulse-webhook', ...payload }),
-        signal: controller.signal,
-      });
-      status = res.status;
-      ok = res.ok;
-    } catch (e: any) {
-      error = e?.name === 'AbortError' ? 'timeout' : String(e?.message || e);
-    } finally {
+    // SSRF guard: the forwarding URL is user-supplied.
+    const blocked = await checkPublicUrl(config.url);
+
+    if (blocked) {
+      error = blocked;
       clearTimeout(timer);
+    } else {
+      try {
+        const res = await fetch(config.url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(config.secret ? { 'x-pulse-secret': config.secret } : {}),
+          },
+          body: JSON.stringify({ source: 'pulse-webhook', ...payload }),
+          signal: controller.signal,
+        });
+        status = res.status;
+        ok = res.ok;
+      } catch (e: any) {
+        error = e?.name === 'AbortError' ? 'timeout' : String(e?.message || e);
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     await db().pulseWebhookDelivery.create({

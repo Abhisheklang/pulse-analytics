@@ -2,6 +2,7 @@ import { createHash, createHmac, createSign } from 'node:crypto';
 import { uuid } from '@/lib/crypto';
 import { logAudit } from './audit';
 import { pulseDb } from './stats';
+import { assertPublicUrl } from './url-guard';
 
 // Data warehouse export: serialises a website's events (with their event
 // data) to NDJSON or CSV and ships them to an S3-compatible bucket (AWS
@@ -160,6 +161,8 @@ export async function s3PutObject(
   }
 
   const url = new URL(`${endpoint}/${bucket}/${key}`);
+  // SSRF guard: the S3 endpoint is user-supplied export config.
+  await assertPublicUrl(url.toString());
   const now = new Date();
   const amzDate = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const dateStamp = amzDate.slice(0, 8);

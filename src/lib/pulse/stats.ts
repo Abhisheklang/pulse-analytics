@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { checkPublicUrl } from './url-guard';
 
 const db = () => (prisma as any).client;
 
@@ -121,6 +122,10 @@ export async function postWebhook(
   payload: Record<string, any>,
   timeoutMs = 5000,
 ): Promise<{ ok: boolean; status?: number; error?: string }> {
+  // SSRF guard: the webhook URL is user-supplied.
+  const blocked = await checkPublicUrl(url);
+  if (blocked) return { ok: false, error: blocked };
+
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);

@@ -6,6 +6,7 @@
 
 import { getSmtpSettings } from './settings';
 import { renderEmailHtml, sendSmtpMail } from './smtp';
+import { checkPublicUrl } from './url-guard';
 
 export interface DeliveryTarget {
   channel?: string | null;
@@ -43,6 +44,10 @@ async function postJson(
   payload: Record<string, any>,
   timeoutMs = 5000,
 ): Promise<{ ok: boolean; status?: number; error?: string }> {
+  // SSRF guard: webhook and bot API URLs are user-supplied.
+  const blocked = await checkPublicUrl(url);
+  if (blocked) return { ok: false, error: blocked };
+
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
