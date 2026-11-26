@@ -1,7 +1,7 @@
 import { uuid } from '@/lib/crypto';
 import { deliverToChannel } from './deliver';
 import { pulseDb } from './stats';
-import { checkPublicUrl } from './url-guard';
+import { pinnedFetch } from './url-guard';
 
 const db = () => pulseDb();
 
@@ -14,16 +14,15 @@ async function fetchMonitorUrl(startUrl: string): Promise<{ status: number }> {
   let currentUrl = startUrl;
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const blocked = await checkPublicUrl(currentUrl);
-    if (blocked) throw new Error(blocked);
-
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     let res: Response;
     try {
-      res = await fetch(currentUrl, {
+      // P-ADV-5: pinnedFetch validates the hop and pins the connection
+      // to the validated addresses (UnsafeUrlError propagates as the
+      // check failure, with the same message checkPublicUrl produced).
+      res = await pinnedFetch(currentUrl, {
         method: 'GET',
-        redirect: 'manual',
         signal: controller.signal,
         headers: { 'user-agent': 'PulseUptimeCheck/1.0' },
       });

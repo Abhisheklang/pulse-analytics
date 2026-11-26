@@ -1,5 +1,13 @@
+import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { assertPublicUrl, checkPublicUrl, guardedFetch, isPublicIp } from '@/lib/pulse/url-guard';
+import {
+  assertPublicUrl,
+  checkPublicUrl,
+  guardedFetch,
+  isPublicIp,
+  pinnedAgent,
+  pinnedFetch,
+} from '@/lib/pulse/url-guard';
 
 // Regression tests for the SSRF guard (audit bug C3). Literal IPs and
 // localhost only: no external DNS or network is needed.
@@ -136,5 +144,65 @@ describe('url-guard: guardedFetch redirect revalidation (SEC-2)', () => {
     vi.stubGlobal('fetch', fetchMock);
     await expect(guardedFetch('http://192.168.1.1/hook')).rejects.toThrow(/non-public/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('url-guard: IP pinning (P-ADV-5)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('pinnedFetch fetches through a dispatcher so the connection is pinned', async () => {
+    const fetchMock = vi.fn(async (_url: any, _init?: any) => ({
+      status: 200,
+      ok: true,
+      headers: { get: () => null },
+      text: async () => '',
+    }) as any);
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await pinnedFetch('http://8.8.8.8/hook', { method: 'POST', body: '{}' });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // The dispatcher is the pinning Agent: without it fetch would
+    // re-resolve the hostname independently of the guard's check.
+    expect(fetchMock.mock.calls[0][1].dispatcher).toBeDefined();
+    expect(fetchMock.mock.calls[0][1].redirect).toBe('manual');
+  });
+
+  it('pinnedFetch still blocks non-public addresses before any fetch', async () => {
+    const fetchMock = vi.fn(async () => ({}) as any);
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(pinnedFetch('http://169.254.169.254/')).rejects.toThrow(/non-public/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('pinnedAgent connects to the validated address, not a fresh DNS answer', async () => {
+    // The hostname used here does not resolve anywhere; the only way
+    // the request can land on the loopback server is if the agent's
+    // lookup returns exactly the pinned (validated) addresses. This
+    // is the DNS-rebinding closure: the checked address is the
+    // connected address.
+    let seenHost: string | undefined;
+    const server: Server = createServer((req, res) => {
+      seenHost = req.headers.host;
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('pinned-ok');
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const port = (server.address() as any).port;
+    const agent = pinnedAgent(['127.0.0.1']);
+    try {
+      const res = await fetch(`http://rebind.invalid:${port}/probe`, {
+        dispatcher: agent,
+      } as any);
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe('pinned-ok');
+      // Host header keeps the original hostname (virtual hosting and
+      // TLS SNI are unaffected by pinning).
+      expect(seenHost).toBe(`rebind.invalid:${port}`);
+    } finally {
+      await agent.close();
+      await new Promise(resolve => server.close(resolve));
+    }
   });
 });

@@ -126,6 +126,7 @@
     "serialize-error": "^13.0.2",
     "thenby": "^1.4.1",
     "ua-parser-js": "^2.0.10",
+    "undici": "7.30.2",
     "uuid": "^14.0.2",
     "zod": "^4.6.6",
     "zustand": "^5.0.15"
