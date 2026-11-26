@@ -1,4 +1,4 @@
-import { getPeriodStats, getSessionDimensionCounts, getTopGrouped, pulseDb } from './stats';
+import { getPeriodStats, getSessionDimensionCounts, getTopGrouped, MAX_PERIOD_EVENTS, pulseDb } from './stats';
 
 // ---- Ask Pulse: plain-English analytics questions -> SAFE query plans ----
 //
@@ -430,6 +430,7 @@ export async function executePlan(websiteId: string, plan: QueryPlan, now: Date 
     const events = await pulseDb().websiteEvent.findMany({
       where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
       select: { createdAt: true, sessionId: true },
+      take: MAX_PERIOD_EVENTS,
     });
     const byDay = new Map<string, { pageviews: number; sessions: Set<string> }>();
     for (let t = startAt.getTime(); t < endAt.getTime(); t += DAY_MS) {

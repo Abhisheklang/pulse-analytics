@@ -3,6 +3,14 @@ import { guardedFetch } from './url-guard';
 
 const db = () => (prisma as any).client;
 
+// SEC-6: hard cap for the in-memory period aggregations below. These
+// helpers load pageview rows into the Node process, and they are
+// reachable by view-level and share-token callers, so an unbounded
+// findMany over a busy site's period is a self-inflicted denial of
+// service. 500k pageviews per period matches the largest cap already
+// used elsewhere in Pulse (rollup trend, exports).
+export const MAX_PERIOD_EVENTS = 500_000;
+
 export interface PeriodStats {
   pageviews: number;
   visitors: number;
@@ -21,6 +29,7 @@ export async function getPeriodStats(
   const events = await client.websiteEvent.findMany({
     where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
     select: { sessionId: true, visitId: true },
+    take: MAX_PERIOD_EVENTS,
   });
 
   const sessions = new Set<string>();

@@ -1,4 +1,4 @@
-import { getPeriodStats, pulseDb } from './stats';
+import { getPeriodStats, MAX_PERIOD_EVENTS, pulseDb } from './stats';
 
 const db = () => pulseDb();
 
@@ -36,6 +36,7 @@ export async function buildQualityReport(websiteId: string, days = 30) {
   const events = await db().websiteEvent.findMany({
     where: { websiteId, eventType: 1, createdAt: { gte: start, lt: now } },
     select: { urlPath: true, pageTitle: true, referrerDomain: true, sessionId: true },
+    take: MAX_PERIOD_EVENTS,
   });
 
   const stats = await getPeriodStats(websiteId, start, now);
