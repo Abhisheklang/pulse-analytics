@@ -7,11 +7,18 @@ import { canUpdateWebsite, canViewWebsite } from '@/permissions';
 
 async function getOrCreateSetting(websiteId: string) {
   const db = pulseDb();
-  const existing = await db.pulseSiteSetting.findUnique({ where: { websiteId } });
-  if (existing) return existing;
-
-  return db.pulseSiteSetting.create({
-    data: { websiteId, retentionDays: 0, badgeEnabled: false, badgeToken: uuid().replace(/-/g, '') },
+  // COR-7: a single atomic upsert. The previous findUnique-then-create
+  // raced on concurrent first visits: both callers saw no row, both
+  // tried to create, and the loser got an unhandled P2002 (500).
+  return db.pulseSiteSetting.upsert({
+    where: { websiteId },
+    create: {
+      websiteId,
+      retentionDays: 0,
+      badgeEnabled: false,
+      badgeToken: uuid().replace(/-/g, ''),
+    },
+    update: {},
   });
 }
 

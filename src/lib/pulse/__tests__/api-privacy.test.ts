@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   canViewWebsite: vi.fn(),
   canUpdateWebsite: vi.fn(),
   db: {
-    pulseSiteSetting: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    pulseSiteSetting: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), upsert: vi.fn() },
     pulseAuditLog: { create: vi.fn() },
     websiteEvent: {
       aggregate: vi.fn(),
@@ -77,6 +77,7 @@ beforeEach(() => {
   mocks.canUpdateWebsite.mockResolvedValue(true);
 
   mocks.db.pulseSiteSetting.findUnique.mockResolvedValue(existingSetting);
+  mocks.db.pulseSiteSetting.upsert.mockResolvedValue(existingSetting);
   mocks.db.websiteEvent.aggregate.mockResolvedValue({
     _min: { createdAt: new Date('2026-01-01T00:00:00.000Z') },
     _max: { createdAt: new Date('2026-11-20T00:00:00.000Z') },
@@ -107,18 +108,45 @@ describe('GDPR toolkit API: privacy overview', () => {
   });
 
   it('creates a default setting on first access', async () => {
-    mocks.db.pulseSiteSetting.findUnique.mockResolvedValue(null);
     const created = { websiteId: 'site-1', retentionDays: 0, badgeEnabled: false, badgeToken: 'newtok' };
-    mocks.db.pulseSiteSetting.create.mockResolvedValue(created);
+    mocks.db.pulseSiteSetting.upsert.mockResolvedValue(created);
 
     const response = await privacyGET(new Request(privacyUrl), { params });
 
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.setting).toEqual(created);
-    expect(mocks.db.pulseSiteSetting.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ websiteId: 'site-1', retentionDays: 0, badgeEnabled: false }),
+    expect(mocks.db.pulseSiteSetting.upsert).toHaveBeenCalledWith({
+      where: { websiteId: 'site-1' },
+      create: expect.objectContaining({ websiteId: 'site-1', retentionDays: 0, badgeEnabled: false }),
+      update: {},
     });
+    // COR-7: the racy findUnique-then-create pair is gone.
+    expect(mocks.db.pulseSiteSetting.create).not.toHaveBeenCalled();
+  });
+
+  it('COR-7: concurrent first visits both succeed through the atomic upsert', async () => {
+    // Simulate the database side of an upsert: the first caller
+    // creates the row, later callers get the same row back. With the
+    // old findUnique-then-create code the second caller hit P2002.
+    let stored: any = null;
+    mocks.db.pulseSiteSetting.upsert.mockImplementation(async ({ create }: any) => {
+      if (!stored) stored = { ...create };
+      return stored;
+    });
+
+    const [first, second] = await Promise.all([
+      privacyGET(new Request(privacyUrl), { params }),
+      privacyGET(new Request(privacyUrl), { params }),
+    ]);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    const firstBody = await first.json();
+    const secondBody = await second.json();
+    expect(firstBody.setting.websiteId).toBe('site-1');
+    expect(secondBody.setting).toEqual(firstBody.setting);
+    expect(mocks.db.pulseSiteSetting.create).not.toHaveBeenCalled();
   });
 
   it('rejects a user who cannot view the website', async () => {
