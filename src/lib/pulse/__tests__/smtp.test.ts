@@ -9,9 +9,11 @@ import { sendSmtpMail } from '@/lib/pulse/smtp';
 
 let server: Server | null = null;
 let received: string[] = [];
+let receivedData: string[] = [];
 
 async function startSmtpServer(): Promise<number> {
   received = [];
+  receivedData = [];
   server = createServer((socket: Socket) => {
     socket.write('220 test ESMTP\r\n');
     let buffer = '';
@@ -28,6 +30,8 @@ async function startSmtpServer(): Promise<number> {
           if (line === '.') {
             inData = false;
             socket.write('250 OK\r\n');
+          } else {
+            receivedData.push(line);
           }
           continue;
         }
@@ -102,5 +106,57 @@ describe('SEC-8: SMTP plaintext credential guard', () => {
     );
     expect(result.ok).toBe(true);
     expect(received.some(l => l.startsWith('AUTH LOGIN'))).toBe(true);
+  });
+});
+
+describe('SEC-9: SMTP CRLF injection', () => {
+  it('rejects a recipient whose CRLF would inject a second RCPT TO command', async () => {
+    const port = await startSmtpServer();
+    const result = await sendSmtpMail(
+      { host: '127.0.0.1', port, secure: false, fromEmail: 'pulse@example.com' },
+      {
+        to: ['victim@example.com>\r\nRCPT TO:<attacker@evil.example'],
+        subject: 'Hi',
+        text: 'hello',
+      },
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/Invalid recipient/);
+    // The hostile recipient is rejected before any RCPT TO is sent,
+    // so the injected command never reaches the wire.
+    expect(received.filter(l => l.startsWith('RCPT TO'))).toHaveLength(0);
+    expect(received.some(l => l.includes('attacker@evil.example'))).toBe(false);
+  });
+
+  it('strips CRLF from the From name so no Bcc header can be injected', async () => {
+    const port = await startSmtpServer();
+    const result = await sendSmtpMail(
+      {
+        host: '127.0.0.1',
+        port,
+        secure: false,
+        fromName: 'Pulse"\r\nBcc: spy@evil.example',
+        fromEmail: 'pulse@example.com',
+      },
+      { to: ['victim@example.com'], subject: 'Hi', text: 'hello' },
+    );
+    expect(result.ok).toBe(true);
+    expect(receivedData.some(l => l.startsWith('Bcc:'))).toBe(false);
+    expect(receivedData.some(l => l.startsWith('From:'))).toBe(true);
+  });
+
+  it('strips CRLF from the subject so no header can be injected through it', async () => {
+    const port = await startSmtpServer();
+    const result = await sendSmtpMail(
+      { host: '127.0.0.1', port, secure: false, fromEmail: 'pulse@example.com' },
+      {
+        to: ['victim@example.com'],
+        subject: 'Alert\r\nX-Injected: 1',
+        text: 'hello',
+      },
+    );
+    expect(result.ok).toBe(true);
+    expect(receivedData.some(l => l.startsWith('X-Injected:'))).toBe(false);
+    expect(receivedData.some(l => l.startsWith('Subject: Alert'))).toBe(true);
   });
 });

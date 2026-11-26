@@ -133,19 +133,37 @@ function connectSocket(host: string, port: number, secure: boolean): Promise<Soc
   });
 }
 
+// SEC-9: the message and envelope are built by hand below, so any CR
+// or LF inside a header or envelope value would inject extra headers
+// (Bcc:) or whole extra SMTP commands (RCPT TO:). Header values have
+// the CR/LF stripped at this sink; envelope addresses are rejected
+// outright, because a stripped address is a different address.
+function stripCrlf(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ');
+}
+
+function assertEnvelopeAddress(value: string, label: string): string {
+  if (/[\r\n]/.test(value) || /[<>]/.test(value)) {
+    throw new Error(`Invalid ${label}: ${value.slice(0, 60)}`);
+  }
+  return value;
+}
+
 function encodeSubject(subject: string): string {
   // RFC 2047 encoded-word for non-ASCII subjects; plain pass-through otherwise.
-  if (/^[\x20-\x7e]*$/.test(subject)) return subject;
-  return `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
+  const clean = stripCrlf(subject);
+  if (/^[\x20-\x7e]*$/.test(clean)) return clean;
+  return `=?UTF-8?B?${Buffer.from(clean, 'utf8').toString('base64')}?=`;
 }
 
 function buildMime(settings: SmtpSettings, message: MailMessage): string {
-  const fromEmail = settings.fromEmail || settings.username || 'pulse@localhost';
-  const from = settings.fromName ? `"${settings.fromName}" <${fromEmail}>` : fromEmail;
+  const fromEmail = stripCrlf(settings.fromEmail || settings.username || 'pulse@localhost');
+  const fromName = settings.fromName ? stripCrlf(settings.fromName).replace(/"/g, '') : null;
+  const from = fromName ? `"${fromName}" <${fromEmail}>` : fromEmail;
   const boundary = `pulse-boundary-${Date.now().toString(36)}`;
   const headers = [
     `From: ${from}`,
-    `To: ${message.to.join(', ')}`,
+    `To: ${message.to.map(stripCrlf).join(', ')}`,
     `Subject: ${encodeSubject(message.subject)}`,
     `Date: ${new Date().toUTCString()}`,
     'MIME-Version: 1.0',
@@ -232,9 +250,13 @@ export async function sendSmtpMail(
       );
     }
 
-    const fromEmail = settings.fromEmail || settings.username || 'pulse@localhost';
+    const fromEmail = assertEnvelopeAddress(
+      settings.fromEmail || settings.username || 'pulse@localhost',
+      'sender address',
+    );
     await session.command(`MAIL FROM:<${fromEmail}>`, [250]);
     for (const rcpt of message.to) {
+      assertEnvelopeAddress(rcpt, 'recipient address');
       await session.command(`RCPT TO:<${rcpt}>`, [250, 251]);
     }
     await session.command('DATA', [354]);

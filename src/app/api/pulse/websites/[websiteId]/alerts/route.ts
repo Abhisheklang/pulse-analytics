@@ -16,7 +16,7 @@ const createSchema = z.object({
   channel: z.enum(['webhook', 'slack', 'discord', 'telegram', 'email']).default('webhook'),
   telegramBotToken: z.string().max(200).optional().nullable(),
   telegramChatId: z.string().max(100).optional().nullable(),
-  emailTo: z.string().max(320).optional().nullable(),
+  emailTo: z.string().email().max(320).optional().nullable(),
   enabled: z.boolean().default(true),
 });
 
