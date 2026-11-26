@@ -3,7 +3,7 @@ import { uuid } from '@/lib/crypto';
 import { WIDGET_CATALOG, dashboardLayoutSchema } from '@/lib/pulse/dashboards';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
-import { json } from '@/lib/response';
+import { json, unauthorized } from '@/lib/response';
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
@@ -14,7 +14,10 @@ export async function GET(request: Request) {
   const { auth, error } = await parseRequest(request);
   if (error) return error();
 
+  // P-ADV-3: share-token auth has no user; dashboards are per-user data, so
+  // a share caller gets 401 instead of a null dereference crash.
   const user: any = (auth as any).user;
+  if (!user) return unauthorized();
   const dashboards = await pulseDb().pulseDashboard.findMany({
     where: { userId: user.id },
     orderBy: { updatedAt: 'desc' },
@@ -28,6 +31,7 @@ export async function POST(request: Request) {
   if (error) return error();
 
   const user: any = (auth as any).user;
+  if (!user) return unauthorized();
   const dashboard = await pulseDb().pulseDashboard.create({
     data: {
       id: uuid(),

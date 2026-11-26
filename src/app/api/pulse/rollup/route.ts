@@ -1,7 +1,7 @@
 import { getPeriodStats, pulseDb } from '@/lib/pulse/stats';
 import { getAccessibleWebsites } from '@/lib/pulse/accessible-websites';
 import { parseRequest } from '@/lib/request';
-import { json } from '@/lib/response';
+import { json, unauthorized } from '@/lib/response';
 
 // Cross-site roll-up: combined stats for every website the signed-in user
 // can access, a per-site comparison, and a combined daily trend.
@@ -15,7 +15,11 @@ export async function GET(request: Request) {
   const startAt = new Date(endAt.getTime() - days * 86400_000);
 
   const db = pulseDb();
+  // P-ADV-3: share-token auth has no user; the rollup is scoped to a signed-in
+  // user's accessible websites, so a share caller gets 401 instead of a
+  // null dereference crash.
   const user: any = (auth as any).user;
+  if (!user) return unauthorized();
 
   // COR-8: include team-shared websites, matching canViewWebsite.
   const websites = await getAccessibleWebsites(user, { id: true, name: true, domain: true }, { name: 'asc' });
