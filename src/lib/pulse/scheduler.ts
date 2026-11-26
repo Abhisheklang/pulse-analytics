@@ -80,6 +80,18 @@ async function acquireLease(nowMs: number): Promise<boolean> {
   return res.count > 0;
 }
 
+// COR-5: extend the lease while a tick is still running. Without
+// renewal, a tick lasting longer than LEASE_MS (realistic: alert
+// evaluation loads large stats ranges) let a second instance acquire
+// the expired lease mid-tick and run the same due jobs again.
+export async function renewLease(nowMs: number): Promise<boolean> {
+  const res = await pulseDb().pulseSchedulerState.updateMany({
+    where: { job: LEASE_JOB, leaseOwner: instanceId },
+    data: { leaseExpiresAt: new Date(nowMs + LEASE_MS) },
+  });
+  return res.count > 0;
+}
+
 async function runJob(job: SchedulerJob, nowMs: number): Promise<{ items: number; detail: string }> {
   switch (job) {
     case 'alerts': {
@@ -157,16 +169,29 @@ export async function runSchedulerTick(nowMs = Date.now()) {
 
   if (!(await acquireLease(nowMs))) return { skipped: 'lease' as const, ran: [] as string[] };
 
+  // COR-5: heartbeat-renew the lease for the whole tick: on an
+  // interval well under LEASE_MS (covers one long-running job) and
+  // again before every job (covers a tick of several shorter jobs).
+  const heartbeat = setInterval(() => {
+    renewLease(Date.now()).catch(() => undefined);
+  }, LEASE_MS / 3);
+  (heartbeat as any).unref?.();
+
   const db = pulseDb();
   const ran: string[] = [];
 
-  for (const job of SCHEDULER_JOBS) {
-    const state = await db.pulseSchedulerState.findUnique({ where: { job } });
-    const intervalMs = jobIntervalMs(job, config);
-    const lastMs = state?.lastRunAt ? new Date(state.lastRunAt).getTime() : null;
-    if (!isJobDue(lastMs, intervalMs, nowMs)) continue;
-    await runSchedulerJobNow(job, nowMs);
-    ran.push(job);
+  try {
+    for (const job of SCHEDULER_JOBS) {
+      await renewLease(Date.now());
+      const state = await db.pulseSchedulerState.findUnique({ where: { job } });
+      const intervalMs = jobIntervalMs(job, config);
+      const lastMs = state?.lastRunAt ? new Date(state.lastRunAt).getTime() : null;
+      if (!isJobDue(lastMs, intervalMs, nowMs)) continue;
+      await runSchedulerJobNow(job, nowMs);
+      ran.push(job);
+    }
+  } finally {
+    clearInterval(heartbeat);
   }
 
   return { skipped: null, ran };
