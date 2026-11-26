@@ -72,7 +72,7 @@ export async function PUT(
     },
   });
 
-  return json(config);
+  return json(maskWebhookConfig(config));
 }
 
 export async function DELETE(

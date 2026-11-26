@@ -62,7 +62,7 @@ export async function POST(
     },
   });
 
-  return json(schedule);
+  return json(maskTelegramToken(schedule));
 }
 
 export async function DELETE(

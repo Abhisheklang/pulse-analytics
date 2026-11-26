@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { maskExportJob } from '@/lib/pulse/secrets';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { json, notFound, unauthorized } from '@/lib/response';
@@ -38,7 +39,7 @@ export async function PUT(
     },
   });
 
-  return json({ job: updated });
+  return json({ job: maskExportJob(updated) });
 }
 
 export async function DELETE(

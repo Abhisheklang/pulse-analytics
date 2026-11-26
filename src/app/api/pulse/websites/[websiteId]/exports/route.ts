@@ -62,5 +62,5 @@ export async function POST(
     },
   });
 
-  return json({ job });
+  return json({ job: maskExportJob(job) });
 }

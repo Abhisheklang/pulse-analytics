@@ -84,7 +84,7 @@ export async function POST(
     },
   });
 
-  return json(rule);
+  return json(maskTelegramToken(rule));
 }
 
 export async function PUT(
@@ -110,5 +110,5 @@ export async function PUT(
     data: { enabled: body.enabled },
   });
 
-  return json(rule);
+  return json(maskTelegramToken(rule));
 }

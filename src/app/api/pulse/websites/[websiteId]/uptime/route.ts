@@ -69,5 +69,5 @@ export async function PUT(
     ? await db.pulseUptimeMonitor.update({ where: { websiteId }, data })
     : await db.pulseUptimeMonitor.create({ data: { id: uuid(), websiteId, ...data } });
 
-  return json(monitor);
+  return json(maskUptimeMonitor(monitor));
 }
