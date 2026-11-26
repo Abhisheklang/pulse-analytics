@@ -1,7 +1,7 @@
 'use client';
 
 import { Column, Row, Text } from '@pulselytics/react-zen';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '@/components/hooks';
 import {
   EmptyNote,
@@ -123,7 +123,7 @@ export function PulseDashboardsPage() {
   const catalogLabel = (type: string) =>
     catalog.find((c: any) => c.type === type)?.label || type;
 
-  const openDashboard = async (id: string) => {
+  const openDashboard = useCallback(async (id: string) => {
     setError(null);
     try {
       const res = await get(`/pulse/dashboards/${id}`);
@@ -134,14 +134,15 @@ export function PulseDashboardsPage() {
     } catch (e: any) {
       setError(e?.message || 'Failed to open dashboard');
     }
-  };
+  }, [get]);
 
+  // FIN-4: depend on the list itself, not only its length, so a
+  // reloaded list cannot auto-open a stale first dashboard.
   useEffect(() => {
     if (!selected && dashboards.length) {
       openDashboard(dashboards[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboards.length]);
+  }, [dashboards, selected, openDashboard]);
 
   const handleCreate = async () => {
     setError(null);

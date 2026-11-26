@@ -202,7 +202,7 @@ export function usePulseQuery<T>(url: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [url]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [url, get]);
 
   useEffect(() => {
     reload();

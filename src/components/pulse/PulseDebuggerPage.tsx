@@ -42,7 +42,7 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
     } catch (e: any) {
       setError(e?.message || 'Failed to load events');
     }
-  }, [websiteId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [websiteId, get]);
 
   useEffect(() => {
     load();

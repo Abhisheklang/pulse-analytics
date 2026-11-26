@@ -1,7 +1,7 @@
 'use client';
 
 import { Column, Row, Text } from '@pulselytics/react-zen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApi } from '@/components/hooks';
 import {
   EmptyNote,
@@ -35,8 +35,12 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
 
   const monitor = data?.monitor;
 
+  // FIN-4: initialise the form once per monitor, tracked by id in a
+  // ref, instead of suppressing the dependency warning.
+  const loadedMonitorId = useRef<string | null>(null);
   useEffect(() => {
-    if (monitor) {
+    if (monitor && loadedMonitorId.current !== monitor.id) {
+      loadedMonitorId.current = monitor.id;
       setForm({
         enabled: monitor.enabled,
         url: monitor.url,
@@ -44,7 +48,7 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
         notifyWebhookUrl: monitor.notifyWebhookUrl || '',
       });
     }
-  }, [monitor?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [monitor]);
 
   const handleSave = async () => {
     setError(null);
