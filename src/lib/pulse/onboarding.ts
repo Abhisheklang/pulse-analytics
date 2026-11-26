@@ -1,4 +1,5 @@
 import { checkPassword, hasDefaultPassword } from '@/lib/password';
+import { getAccessibleWebsites } from './accessible-websites';
 import { pulseDb } from './stats';
 
 // First-run onboarding ("Getting started") state for a Pulse account.
@@ -39,13 +40,8 @@ export async function getOnboardingState(user: {
     db.user.findUnique({ where: { id: user.id }, select: { id: true, password: true } }),
   ]);
 
-  const websites = await db.website.findMany({
-    where: user.isAdmin
-      ? { deletedAt: null }
-      : { deletedAt: null, OR: [{ userId: user.id }, { createdBy: user.id }] },
-    select: { id: true },
-    orderBy: { createdAt: 'asc' },
-  });
+  // COR-8: include team-shared websites, matching canViewWebsite.
+  const websites = await getAccessibleWebsites(user, { id: true });
   const websiteIds = websites.map((w: any) => w.id);
   const websiteId = websiteIds[0] || null;
 

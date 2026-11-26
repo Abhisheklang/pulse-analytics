@@ -1,4 +1,5 @@
 import { getPeriodStats, pulseDb } from '@/lib/pulse/stats';
+import { getAccessibleWebsites } from '@/lib/pulse/accessible-websites';
 import { parseRequest } from '@/lib/request';
 import { json } from '@/lib/response';
 
@@ -16,16 +17,8 @@ export async function GET(request: Request) {
   const db = pulseDb();
   const user: any = (auth as any).user;
 
-  const websites = await db.website.findMany({
-    where: {
-      deletedAt: null,
-      ...(user?.isAdmin
-        ? {}
-        : { OR: [{ userId: user.id }, { createdBy: user.id }] }),
-    },
-    select: { id: true, name: true, domain: true },
-    orderBy: { name: 'asc' },
-  });
+  // COR-8: include team-shared websites, matching canViewWebsite.
+  const websites = await getAccessibleWebsites(user, { id: true, name: true, domain: true }, { name: 'asc' });
 
   const perSite = [];
   const totals = { pageviews: 0, visitors: 0, visits: 0, bounces: 0, bounceRate: 0 };
