@@ -6,7 +6,7 @@
 
 import { getSmtpSettings } from './settings';
 import { renderEmailHtml, sendSmtpMail } from './smtp';
-import { checkPublicUrl } from './url-guard';
+import { guardedFetch } from './url-guard';
 
 export interface DeliveryTarget {
   channel?: string | null;
@@ -44,25 +44,25 @@ async function postJson(
   payload: Record<string, any>,
   timeoutMs = 5000,
 ): Promise<{ ok: boolean; status?: number; error?: string }> {
-  // SSRF guard: webhook and bot API URLs are user-supplied.
-  const blocked = await checkPublicUrl(url);
-  if (blocked) return { ok: false, error: blocked };
+  // SSRF guard: webhook and bot API URLs are user-supplied. guardedFetch
+  // validates the initial URL and re-validates every redirect hop
+  // (SEC-2); the timer is cleared on every path (COR-9).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    const res = await fetch(url, {
+    const res = await guardedFetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
 
-    clearTimeout(timer);
     return { ok: res.ok, status: res.status };
   } catch (e: any) {
     return { ok: false, error: e?.name === 'AbortError' ? 'timeout' : String(e?.message || e) };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

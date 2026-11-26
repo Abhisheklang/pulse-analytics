@@ -2,7 +2,7 @@ import { createHash, createHmac, createSign } from 'node:crypto';
 import { uuid } from '@/lib/crypto';
 import { logAudit } from './audit';
 import { pulseDb } from './stats';
-import { assertPublicUrl } from './url-guard';
+import { assertPublicUrl, guardedFetch } from './url-guard';
 
 // Data warehouse export: serialises a website's events (with their event
 // data) to NDJSON or CSV and ships them to an S3-compatible bucket (AWS
@@ -194,7 +194,9 @@ export async function s3PutObject(
   const kSigning = deriveSigV4SigningKey(secretAccessKey, dateStamp, region, 's3');
   const signature = createHmac('sha256', kSigning).update(stringToSign).digest('hex');
 
-  const res = await fetch(url, {
+  // guardedFetch re-validates the signed URL and every redirect hop
+  // against the SSRF guard (SEC-2).
+  const res = await guardedFetch(url.toString(), {
     method: 'PUT',
     headers: {
       ...headers,

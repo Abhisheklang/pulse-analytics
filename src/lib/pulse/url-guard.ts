@@ -84,3 +84,43 @@ export async function checkPublicUrl(rawUrl: string): Promise<string | null> {
     return e?.message || 'Blocked URL';
   }
 }
+
+// SEC-2: fetch that follows redirects manually and re-validates EVERY
+// hop against the public-address guard. The platform default
+// (redirect: 'follow') would follow a public URL's 302 to an internal
+// address without any re-check. Mirrors the pattern uptime.ts already
+// used for monitor checks. Throws UnsafeUrlError for a blocked hop or
+// when the redirect budget is exhausted.
+export async function guardedFetch(
+  rawUrl: string,
+  init: RequestInit = {},
+  maxRedirects = 5,
+): Promise<Response> {
+  let url = (await assertPublicUrl(rawUrl)).toString();
+  let method = (init.method || 'GET').toUpperCase();
+  let body = init.body;
+
+  for (let hop = 0; ; hop++) {
+    const res = await fetch(url, { ...init, method, body, redirect: 'manual' });
+
+    const location = res.headers.get('location');
+    if (res.status < 300 || res.status >= 400 || !location) {
+      return res;
+    }
+
+    // Drain the body so the socket can close cleanly.
+    await res.text().catch(() => '');
+    if (hop >= maxRedirects) {
+      throw new UnsafeUrlError('Too many redirects');
+    }
+
+    url = (await assertPublicUrl(new URL(location, url).toString())).toString();
+
+    // Per fetch semantics, 303 always converts to GET, and 301/302
+    // convert a POST to GET; 307/308 preserve method and body.
+    if (res.status === 303 || ((res.status === 301 || res.status === 302) && method === 'POST')) {
+      method = 'GET';
+      body = undefined;
+    }
+  }
+}

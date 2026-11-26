@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { checkPublicUrl } from './url-guard';
+import { guardedFetch } from './url-guard';
 
 const db = () => (prisma as any).client;
 
@@ -122,15 +122,14 @@ export async function postWebhook(
   payload: Record<string, any>,
   timeoutMs = 5000,
 ): Promise<{ ok: boolean; status?: number; error?: string }> {
-  // SSRF guard: the webhook URL is user-supplied.
-  const blocked = await checkPublicUrl(url);
-  if (blocked) return { ok: false, error: blocked };
+  // SSRF guard: the webhook URL is user-supplied. guardedFetch validates
+  // the initial URL and re-validates every redirect hop (SEC-2); the
+  // timer is cleared on every path (COR-9).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    const res = await fetch(url, {
+    const res = await guardedFetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -141,11 +140,11 @@ export async function postWebhook(
       signal: controller.signal,
     });
 
-    clearTimeout(timer);
-
     return { ok: res.ok, status: res.status };
   } catch (e: any) {
     return { ok: false, error: e?.name === 'AbortError' ? 'timeout' : String(e?.message || e) };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

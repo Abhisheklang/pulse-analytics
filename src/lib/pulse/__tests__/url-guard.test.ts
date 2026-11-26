@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { assertPublicUrl, checkPublicUrl, isPublicIp } from '@/lib/pulse/url-guard';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { assertPublicUrl, checkPublicUrl, guardedFetch, isPublicIp } from '@/lib/pulse/url-guard';
 
 // Regression tests for the SSRF guard (audit bug C3). Literal IPs and
 // localhost only: no external DNS or network is needed.
@@ -63,5 +63,78 @@ describe('url-guard: assertPublicUrl / checkPublicUrl', () => {
     expect(await checkPublicUrl('file:///etc/passwd')).toMatch(/scheme/);
     expect(await checkPublicUrl('gopher://8.8.8.8/')).toMatch(/scheme/);
     expect(await checkPublicUrl('not a url')).toMatch(/Invalid URL/);
+  });
+});
+
+describe('url-guard: guardedFetch redirect revalidation (SEC-2)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function fakeResponse(status: number, location?: string) {
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      headers: { get: (name: string) => (name === 'location' ? location || null : null) },
+      text: async () => '',
+    } as any;
+  }
+
+  it('returns a direct response without following anything', async () => {
+    const fetchMock = vi.fn(async () => fakeResponse(200));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await guardedFetch('http://8.8.8.8/hook', { method: 'POST', body: '{}' });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1].redirect).toBe('manual');
+  });
+
+  it('blocks a redirect from a public URL to the metadata address', async () => {
+    const fetchMock = vi.fn(async () =>
+      fakeResponse(302, 'http://169.254.169.254/latest/meta-data/'),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(guardedFetch('http://8.8.8.8/hook', { method: 'POST' })).rejects.toThrow(
+      /non-public/,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks a redirect to loopback', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => fakeResponse(301, 'http://127.0.0.1:3000/admin')),
+    );
+    await expect(guardedFetch('http://8.8.8.8/hook')).rejects.toThrow(/non-public/);
+  });
+
+  it('follows a redirect to another public URL', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(fakeResponse(307, 'http://1.1.1.1/final'))
+      .mockResolvedValueOnce(fakeResponse(200));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await guardedFetch('http://8.8.8.8/hook', { method: 'PUT', body: 'x' });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe('http://1.1.1.1/final');
+    // 307 preserves method and body.
+    expect(fetchMock.mock.calls[1][1].method).toBe('PUT');
+    expect(fetchMock.mock.calls[1][1].body).toBe('x');
+  });
+
+  it('gives up after the redirect budget', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => fakeResponse(302, 'http://8.8.8.8/again')),
+    );
+    await expect(guardedFetch('http://8.8.8.8/hook', {}, 3)).rejects.toThrow(/Too many redirects/);
+  });
+
+  it('blocks the initial URL before any fetch happens', async () => {
+    const fetchMock = vi.fn(async () => fakeResponse(200));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(guardedFetch('http://192.168.1.1/hook')).rejects.toThrow(/non-public/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
