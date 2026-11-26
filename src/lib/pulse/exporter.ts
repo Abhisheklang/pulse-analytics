@@ -1,6 +1,7 @@
 import { createHash, createHmac, createSign } from 'node:crypto';
 import { uuid } from '@/lib/crypto';
 import { logAudit } from './audit';
+import { csvEscape } from './html';
 import { pulseDb } from './stats';
 import { assertPublicUrl, guardedFetch } from './url-guard';
 
@@ -110,7 +111,7 @@ const CSV_COLUMNS: (keyof ExportRow)[] = [
 
 export function formatExport(rows: ExportRow[], format: string): string {
   if (format === 'csv') {
-    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const esc = csvEscape;
     const lines = [CSV_COLUMNS.join(',')];
     for (const row of rows) {
       lines.push(

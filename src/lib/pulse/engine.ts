@@ -1,5 +1,6 @@
 import { uuid } from '@/lib/crypto';
 import { channelOf, deliverEmail, deliverToChannel, hasTarget } from './deliver';
+import { csvEscape } from './html';
 import { getPeriodStats, getTopCountries, getTopGrouped, pulseDb } from './stats';
 
 const db = () => pulseDb();
@@ -172,9 +173,9 @@ export function summaryToCsv(summary: ReportSummary): string {
     `totals,visitors,${summary.current.visitors}`,
     `totals,visits,${summary.current.visits}`,
     `totals,bounceRate,${summary.current.bounceRate}`,
-    ...summary.topPages.map(p => `top_pages,${JSON.stringify(p.name)},${p.count}`),
-    ...summary.topReferrers.map(p => `top_referrers,${JSON.stringify(p.name)},${p.count}`),
-    ...summary.topCountries.map(p => `top_countries,${JSON.stringify(p.name)},${p.count}`),
+    ...summary.topPages.map(p => `top_pages,${csvEscape(p.name)},${p.count}`),
+    ...summary.topReferrers.map(p => `top_referrers,${csvEscape(p.name)},${p.count}`),
+    ...summary.topCountries.map(p => `top_countries,${csvEscape(p.name)},${p.count}`),
   ];
   return lines.join('\n');
 }

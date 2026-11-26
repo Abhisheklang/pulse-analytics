@@ -1,5 +1,6 @@
 import { connect as netConnect, type Socket } from 'node:net';
 import { connect as tlsConnect, type TLSSocket } from 'node:tls';
+import { escapeHtml } from './html';
 
 // Hand-rolled SMTP client for Pulse email delivery (no external mail
 // dependency): EHLO, STARTTLS upgrade, AUTH LOGIN, MAIL/RCPT/DATA with
@@ -254,10 +255,6 @@ export async function sendSmtpMail(
 }
 
 // ---------- Pulse-branded message templates ----------
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 export function renderEmailHtml(title: string, text: string): string {
   const paragraphs = text

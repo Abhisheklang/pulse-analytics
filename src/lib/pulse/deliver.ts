@@ -4,6 +4,7 @@
 // Telegram's API base is configurable via
 // PULSE_TELEGRAM_API_BASE so delivery can be tested against a mock server.
 
+import { escapeHtml } from './html';
 import { getSmtpSettings } from './settings';
 import { renderEmailHtml, sendSmtpMail } from './smtp';
 import { guardedFetch } from './url-guard';
@@ -64,10 +65,6 @@ async function postJson(
   } finally {
     clearTimeout(timer);
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function channelOf(target: DeliveryTarget): string {
