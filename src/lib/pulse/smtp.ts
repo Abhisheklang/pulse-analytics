@@ -202,13 +202,27 @@ export async function sendSmtpMail(
     let ehlo = await session.command(`EHLO ${ehloName}`, [250]);
     const offersStartTls = /STARTTLS/i.test(ehlo.text);
 
+    // SEC-8: track whether the session is encrypted. Implicit TLS starts
+    // encrypted; a plain connection becomes encrypted only through a
+    // successful STARTTLS upgrade.
+    let encrypted = settings.secure;
+
     if (!settings.secure && offersStartTls) {
       await session.command('STARTTLS', [220]);
       await session.upgradeToTls(settings.host);
+      encrypted = true;
       ehlo = await session.command(`EHLO ${ehloName}`, [250]);
     }
 
     if (settings.username) {
+      // SEC-8: never send AUTH credentials over a plaintext connection
+      // when the server did not offer STARTTLS. An admin can opt out
+      // explicitly for a trusted local relay via the env setting.
+      if (!encrypted && process.env.PULSE_SMTP_ALLOW_PLAINTEXT_AUTH !== '1') {
+        throw new Error(
+          'SMTP server did not offer STARTTLS; refusing to send credentials over a plaintext connection. Set PULSE_SMTP_ALLOW_PLAINTEXT_AUTH=1 to allow plaintext authentication.',
+        );
+      }
       await session.command('AUTH LOGIN', [334]);
       await session.command(Buffer.from(settings.username, 'utf8').toString('base64'), [334]);
       await session.command(
