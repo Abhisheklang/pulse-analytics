@@ -2,7 +2,7 @@ import { logAudit } from '@/lib/pulse/audit';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { unauthorized } from '@/lib/response';
-import { canViewWebsite } from '@/permissions';
+import { canUpdateWebsite } from '@/permissions';
 
 export async function GET(
   request: Request,
@@ -12,7 +12,9 @@ export async function GET(
   if (error) return error();
 
   const { websiteId } = await params;
-  if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
+  // Raw event export (up to 50,000 rows) is update-level only: view-level
+  // callers and share-token holders must never download raw event history.
+  if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
   const url = new URL(request.url);
   const format = url.searchParams.get('format') === 'json' ? 'json' : 'csv';
