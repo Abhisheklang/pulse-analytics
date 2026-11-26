@@ -37,6 +37,15 @@ export async function GET(
   if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
 
   const url = new URL(request.url);
+
+  // SEC-7: the downloadable per-visitor export is the same underlying
+  // data the C2 fix moved to update level for the bulk export, so the
+  // ?export=1 form requires update access too. The in-page lookup
+  // stays view-level.
+  if (url.searchParams.get('export') === '1' && !(await canUpdateWebsite(auth, websiteId))) {
+    return unauthorized();
+  }
+
   const sessionId = url.searchParams.get('sessionId');
   if (!sessionId) return badRequest({ message: 'sessionId is required.' });
 

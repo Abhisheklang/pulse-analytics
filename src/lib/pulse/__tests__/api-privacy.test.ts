@@ -261,3 +261,53 @@ describe('GDPR toolkit API: visitor lookup and erasure', () => {
     expect(mocks.db.session.findFirst).not.toHaveBeenCalled();
   });
 });
+
+describe('SEC-7: visitor export level and badge token exposure', () => {
+  it('refuses the visitor download for a view-only caller', async () => {
+    mocks.canUpdateWebsite.mockResolvedValue(false);
+
+    const response = await visitorGET(
+      new Request(`${visitorUrl}?sessionId=sess-1&export=1`),
+      { params },
+    );
+
+    expect(response.status).toBe(401);
+    expect(mocks.db.session.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('serves the visitor download to an update-level caller', async () => {
+    mocks.db.session.findFirst.mockResolvedValue(session);
+    mocks.db.websiteEvent.findMany.mockResolvedValue([]);
+    mocks.db.sessionData.findMany.mockResolvedValue([]);
+
+    const response = await visitorGET(
+      new Request(`${visitorUrl}?sessionId=sess-1&export=1`),
+      { params },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toMatch(/attachment/);
+  });
+
+  it('keeps the plain visitor lookup at view level', async () => {
+    mocks.canUpdateWebsite.mockResolvedValue(false);
+    mocks.db.session.findFirst.mockResolvedValue(session);
+    mocks.db.websiteEvent.findMany.mockResolvedValue([]);
+    mocks.db.sessionData.findMany.mockResolvedValue([]);
+
+    const response = await visitorGET(new Request(`${visitorUrl}?sessionId=sess-1`), { params });
+
+    expect(response.status).toBe(200);
+  });
+
+  it('hides the badge token from view-only callers on the privacy overview', async () => {
+    mocks.canUpdateWebsite.mockResolvedValue(false);
+
+    const response = await privacyGET(new Request(privacyUrl), { params });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.setting.badgeToken).toBeUndefined();
+    expect(body.setting.retentionDays).toBe(30);
+  });
+});

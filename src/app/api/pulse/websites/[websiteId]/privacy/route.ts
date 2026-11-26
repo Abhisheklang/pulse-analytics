@@ -28,6 +28,11 @@ export async function GET(
   const db = pulseDb();
   const setting = await getOrCreateSetting(websiteId);
 
+  // SEC-7 (related): the badge token is a credential for the public
+  // badge endpoint; view-level callers do not receive it.
+  const canUpdate = await canUpdateWebsite(auth, websiteId);
+  const safeSetting = canUpdate ? setting : { ...setting, badgeToken: undefined };
+
   const [range, eventCount, sessionCount] = await Promise.all([
     db.websiteEvent.aggregate({
       where: { websiteId },
@@ -39,7 +44,7 @@ export async function GET(
   ]);
 
   return json({
-    setting,
+    setting: safeSetting,
     dataRange: { from: range._min.createdAt, to: range._max.createdAt },
     eventCount,
     sessionCount,
