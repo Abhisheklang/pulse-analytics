@@ -2,6 +2,7 @@ import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS, FILTER_COLUMNS, SESSION_COLUMNS } from '@/lib/constants';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
+import { escapeLikeValue } from '@/lib/search';
 import type { QueryFilters } from '@/lib/types';
 
 const FUNCTION_NAME = 'getPageviewMetrics';

@@ -2,6 +2,7 @@ import clickhouse from '@/lib/clickhouse';
 import { DEFAULT_PAGE_SIZE, EVENT_TYPE } from '@/lib/constants';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
+import { escapeLikeValue } from '@/lib/search';
 import type { PageResult, QueryFilters, WebsiteEvent } from '@/lib/types';
 
 const FUNCTION_NAME = 'getWebsiteEvents';
