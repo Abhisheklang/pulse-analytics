@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { isMaskedSecret, maskWebhookConfig } from '@/lib/pulse/secrets';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { json, unauthorized } from '@/lib/response';
-import { canUpdateWebsite, canViewWebsite } from '@/permissions';
+import { canUpdateWebsite } from '@/permissions';
 
 export async function GET(
   request: Request,
@@ -12,7 +13,9 @@ export async function GET(
   if (error) return error();
 
   const { websiteId } = await params;
-  if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
+  // The webhook config holds the forwarding signing secret: update-level
+  // only, never view-level or share-token access, and masked regardless.
+  if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
   const db = pulseDb();
   const [config, deliveries] = await Promise.all([
@@ -24,7 +27,7 @@ export async function GET(
     }),
   ]);
 
-  return json({ config, deliveries });
+  return json({ config: maskWebhookConfig(config), deliveries });
 }
 
 const putSchema = z.object({
@@ -44,19 +47,27 @@ export async function PUT(
   const { websiteId } = await params;
   if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
+  // A masked secret in the payload means "keep the stored secret" (the
+  // edit form is prefilled from the masked GET response).
+  let secret = body.secret || null;
+  if (isMaskedSecret(body.secret)) {
+    const existing = await pulseDb().pulseWebhookConfig.findUnique({ where: { websiteId } });
+    secret = existing?.secret || null;
+  }
+
   const config = await pulseDb().pulseWebhookConfig.upsert({
     where: { websiteId },
     create: {
       websiteId,
       url: body.url,
       events: body.events,
-      secret: body.secret || null,
+      secret,
       enabled: body.enabled,
     },
     update: {
       url: body.url,
       events: body.events,
-      secret: body.secret || null,
+      secret,
       enabled: body.enabled,
     },
   });

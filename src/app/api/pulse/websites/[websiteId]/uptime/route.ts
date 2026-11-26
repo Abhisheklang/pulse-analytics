@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { uuid } from '@/lib/crypto';
+import { isMaskedSecret, maskUptimeMonitor } from '@/lib/pulse/secrets';
 import { pulseDb } from '@/lib/pulse/stats';
 import { getUptimeSummary } from '@/lib/pulse/uptime';
 import { parseRequest } from '@/lib/request';
 import { json, unauthorized } from '@/lib/response';
-import { canUpdateWebsite, canViewWebsite } from '@/permissions';
+import { canUpdateWebsite } from '@/permissions';
 
 export async function GET(
   request: Request,
@@ -14,9 +15,12 @@ export async function GET(
   if (error) return error();
 
   const { websiteId } = await params;
-  if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
+  // The monitor row holds a credential-bearing notify webhook URL:
+  // update-level only, never view-level or share-token access, masked below.
+  if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
   const summary = await getUptimeSummary(websiteId);
+  summary.monitor = maskUptimeMonitor(summary.monitor);
   const setting = await pulseDb().pulseSiteSetting.findUnique({ where: { websiteId } });
 
   return json({
@@ -50,11 +54,15 @@ export async function PUT(
   const db = pulseDb();
   const existing = await db.pulseUptimeMonitor.findUnique({ where: { websiteId } });
 
+  // A masked notify URL in the payload means "keep the stored URL" (the
+  // edit form is prefilled from the masked GET response).
   const data = {
     enabled: body.enabled,
     url: body.url,
     intervalMinutes: body.intervalMinutes,
-    notifyWebhookUrl: body.notifyWebhookUrl || null,
+    notifyWebhookUrl: isMaskedSecret(body.notifyWebhookUrl)
+      ? existing?.notifyWebhookUrl || null
+      : body.notifyWebhookUrl || null,
   };
 
   const monitor = existing

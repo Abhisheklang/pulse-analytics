@@ -96,14 +96,28 @@ describe('Alerts API: GET', () => {
     );
   });
 
-  it('rejects a user who cannot view the website', async () => {
+  it('rejects a caller without update access (view-only and share tokens)', async () => {
     mockBody(undefined);
-    mocks.canViewWebsite.mockResolvedValue(false);
+    mocks.canUpdateWebsite.mockResolvedValue(false);
 
     const response = await GET(new Request(url), { params });
 
     expect(response.status).toBe(401);
     expect(mocks.db.pulseAlertRule.findMany).not.toHaveBeenCalled();
+  });
+
+  it('masks the Telegram bot token in listed rules', async () => {
+    mockBody(undefined);
+    mocks.db.pulseAlertRule.findMany.mockResolvedValue([
+      { ...existingRule, channel: 'telegram', telegramBotToken: '123456:real-bot-token' },
+    ]);
+
+    const response = await GET(new Request(url), { params });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.rules[0].telegramBotToken).toBe('********');
+    expect(JSON.stringify(body)).not.toContain('real-bot-token');
   });
 });
 

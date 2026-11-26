@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { uuid } from '@/lib/crypto';
+import { maskTelegramToken } from '@/lib/pulse/secrets';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { badRequest, json, unauthorized } from '@/lib/response';
-import { canUpdateWebsite, canViewWebsite } from '@/permissions';
+import { canUpdateWebsite } from '@/permissions';
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
@@ -27,7 +28,8 @@ export async function GET(
   if (error) return error();
 
   const { websiteId } = await params;
-  if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
+  // Alert rules hold a Telegram bot token: update-level only, masked below.
+  if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
   const db = pulseDb();
   const [rules, logs] = await Promise.all([
@@ -39,7 +41,7 @@ export async function GET(
     }),
   ]);
 
-  return json({ rules, logs });
+  return json({ rules: rules.map(maskTelegramToken), logs });
 }
 
 export async function POST(

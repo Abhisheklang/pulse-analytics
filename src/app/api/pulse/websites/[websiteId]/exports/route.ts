@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { uuid } from '@/lib/crypto';
+import { maskExportJob } from '@/lib/pulse/secrets';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { json, unauthorized } from '@/lib/response';
-import { canUpdateWebsite, canViewWebsite } from '@/permissions';
+import { canUpdateWebsite } from '@/permissions';
 
 export async function GET(
   request: Request,
@@ -13,7 +14,10 @@ export async function GET(
   if (error) return error();
 
   const { websiteId } = await params;
-  if (!(await canViewWebsite(auth, websiteId))) return unauthorized();
+  // Export job configs hold warehouse credentials (S3 secretAccessKey,
+  // BigQuery privateKey): this listing is update-level only, never
+  // view-level or share-token access, and secrets are masked regardless.
+  if (!(await canUpdateWebsite(auth, websiteId))) return unauthorized();
 
   const db = pulseDb();
   const [jobs, logs] = await Promise.all([
@@ -25,7 +29,7 @@ export async function GET(
     }),
   ]);
 
-  return json({ jobs, logs });
+  return json({ jobs: jobs.map(maskExportJob), logs });
 }
 
 const createSchema = z.object({
