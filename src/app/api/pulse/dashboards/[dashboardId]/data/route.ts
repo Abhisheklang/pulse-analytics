@@ -18,7 +18,7 @@ export async function GET(
   });
   if (!dashboard) return notFound();
 
-  const layout = (dashboard.layout || []) as DashboardWidget[];
+  const layout = (dashboard.layout || []) as unknown as DashboardWidget[];
 
   // Only compute widgets for websites this user may actually view.
   const websiteIds = [...new Set(layout.map(w => w.websiteId))];

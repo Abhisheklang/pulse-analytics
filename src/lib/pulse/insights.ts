@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
-import { getPeriodStats, getSessionDimensionCounts } from './stats';
+import { getPeriodStats, getSessionDimensionCounts, pulseDb } from './stats';
 
-const db = () => (prisma as any).client;
+const db = () => pulseDb();
 
 export interface Insight {
   type: string;
@@ -32,10 +32,14 @@ async function topByField(
   websiteId: string,
   startAt: Date,
   endAt: Date,
-  field: string,
+  field: 'urlPath' | 'referrerDomain',
   limit = 30,
 ): Promise<Map<string, number>> {
-  const rows = await db().websiteEvent.groupBy({
+  // The grouped field is chosen by the caller from a two-value
+  // allow-list; Prisma's groupBy typing cannot express a dynamic
+  // by-field (its mapped types recurse), so the delegate is cast at
+  // this one call site.
+  const rows = await (db().websiteEvent.groupBy as any)({
     by: [field],
     where: { websiteId, eventType: 1, createdAt: { gte: startAt, lt: endAt } },
     _count: { _all: true },

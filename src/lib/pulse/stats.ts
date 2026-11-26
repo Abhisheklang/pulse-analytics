@@ -1,7 +1,14 @@
+import type { PrismaClient } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { guardedFetch } from './url-guard';
 
-const db = () => (prisma as any).client;
+// FIN-2: pulseDb is the generated PrismaClient type, not
+// (prisma as any).client, so Pulse queries are checked against the
+// Prisma schema instead of bypassing it entirely. The app's client
+// wrapper adds raw-query helpers on top of the same client, hence
+// the single cast at this boundary.
+const db = () => prisma.client as unknown as PrismaClient;
+
 
 // SEC-6: hard cap for the in-memory period aggregations below. These
 // helpers load pageview rows into the Node process, and they are
