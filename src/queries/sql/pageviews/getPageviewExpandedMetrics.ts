@@ -1,4 +1,5 @@
 import clickhouse from '@/lib/clickhouse';
+import { escapeLikeValue } from '@/lib/search';
 import {
   FILTER_COLUMNS,
   GROUPED_DOMAINS,
@@ -129,7 +130,7 @@ async function relationalQuery(
     `,
     {
       ...queryParams,
-      ...(type === 'fullPath' && filters.search ? { fullPathSearch: `%${filters.search}%` } : {}),
+      ...(type === 'fullPath' && filters.search ? { fullPathSearch: `%${escapeLikeValue(filters.search)}%` } : {}),
     },
     FUNCTION_NAME,
   );

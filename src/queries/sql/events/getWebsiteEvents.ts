@@ -25,7 +25,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
     websiteId,
   });
   const hasDataDateQuery = dateQuery.replaceAll('website_event.', 'event_data.');
-  const searchParams = search ? { eventSearch: `%${search}%` } : {};
+  const searchParams = search ? { eventSearch: `%${escapeLikeValue(search)}%` } : {};
 
   const searchQuery = search
     ? `and ((event_name ilike {{eventSearch}} and event_type = ${EVENT_TYPE.customEvent})

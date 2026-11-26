@@ -104,7 +104,7 @@ async function relationalQuery(
     {
       ...queryParams,
       ...parameters,
-      ...(type === 'fullPath' && filters.search ? { fullPathSearch: `%${filters.search}%` } : {}),
+      ...(type === 'fullPath' && filters.search ? { fullPathSearch: `%${escapeLikeValue(filters.search)}%` } : {}),
     },
     FUNCTION_NAME,
   );

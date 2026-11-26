@@ -23,7 +23,7 @@ async function relationalQuery(websiteId: string, currency: string, filters: Que
     ...filters,
     websiteId,
     currency,
-    search: search ? `%${search}%` : undefined,
+    search: search ? `%${escapeLikeValue(search)}%` : undefined,
   });
 
   const searchQuery = search

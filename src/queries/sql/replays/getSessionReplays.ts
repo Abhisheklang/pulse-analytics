@@ -1,6 +1,7 @@
 import clickhouse from '@/lib/clickhouse';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
+import { escapeLikeValue } from '@/lib/search';
 import type { PageResult, QueryFilters, SessionReplaySummary } from '@/lib/types';
 
 const FUNCTION_NAME = 'getSessionReplays';
@@ -21,7 +22,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters, session
   const { filterQuery, cohortQuery, queryParams, joinSessionQuery } = parseFilters({
     ...filters,
     websiteId,
-    search: search ? `%${search}%` : undefined,
+    search: search ? `%${escapeLikeValue(search)}%` : undefined,
   });
 
   const joinQuery =

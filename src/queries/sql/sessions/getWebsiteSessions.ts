@@ -24,7 +24,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
   const { filterQuery, dateQuery, cohortQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
-    search: search ? `%${search}%` : undefined,
+    search: search ? `%${escapeLikeValue(search)}%` : undefined,
   });
 
   const searchQuery = search
