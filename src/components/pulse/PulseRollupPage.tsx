@@ -17,7 +17,7 @@ import {
 
 export function PulseRollupPage() {
   const [days, setDays] = useState('30');
-  const { data, error } = usePulseQuery<any>(`/pulse/rollup?days=${days}`);
+  const { data, loading, error } = usePulseQuery<any>(`/pulse/rollup?days=${days}`);
 
   const totals = data?.totals;
   const perSite = data?.perSite || [];
@@ -30,6 +30,8 @@ export function PulseRollupPage() {
       subtitle="Combined traffic across every website on this account: totals, a per-site comparison, and the combined daily trend."
     >
       <StatusMessage error={error} />
+
+      {loading && !data && <EmptyNote>Loading the roll-up…</EmptyNote>}
 
       <Row gap="3" alignItems="center">
         <Text size="sm" weight="bold">

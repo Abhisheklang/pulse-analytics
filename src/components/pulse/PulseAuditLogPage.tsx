@@ -25,7 +25,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 export function PulseAuditLogPage() {
   const [action, setAction] = useState('');
-  const { data, error } = usePulseQuery<any>(
+  const { data, loading, error } = usePulseQuery<any>(
     `/pulse/audit?limit=100${action ? `&action=${action}` : ''}`,
   );
 
@@ -37,6 +37,8 @@ export function PulseAuditLogPage() {
       subtitle="Sensitive operator actions recorded by Pulse: visitor data deletions, retention cleanups, CSV imports, warehouse export runs and data exports — who did them, where, and when."
     >
       <StatusMessage error={error} />
+
+      {loading && !data && <EmptyNote>Loading audit entries…</EmptyNote>}
 
       <Row gap="3" alignItems="center">
         <Text size="sm" weight="bold">

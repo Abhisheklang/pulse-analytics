@@ -20,6 +20,7 @@ import {
 export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
   const { get } = useApi();
   const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -41,6 +42,8 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
       setError(null);
     } catch (e: any) {
       setError(e?.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
     }
   }, [websiteId, get]);
 
@@ -58,6 +61,16 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
   }, [filter, load]);
 
   const handleSendTest = async () => {
+    // UI-6: a test event is written into the website's REAL analytics
+    // data (tagged pulse.debug so it can be told apart). Say so and
+    // ask first, instead of silently polluting the real event stream.
+    if (
+      !window.confirm(
+        'Send a test event to this website? It will be recorded in the real analytics data as a "pulse.debug" event and cannot be removed automatically.',
+      )
+    ) {
+      return;
+    }
     const marker = `debug-${Date.now()}`;
     try {
       const res = await fetch('/api/send', {
@@ -114,7 +127,9 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
 
       {events.length === 0 ? (
         <EmptyNote>
-          No events match. Send a test event, or check the filter.
+          {loading
+            ? 'Loading events…'
+            : 'No events match. Send a test event, or check the filter.'}
         </EmptyNote>
       ) : (
         <TableWrap><table style={tableStyle}>
