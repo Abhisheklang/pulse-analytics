@@ -60,16 +60,21 @@ export async function buildQualityReport(websiteId: string, days = 30) {
     sessionPages.get(e.sessionId)!.add(e.urlPath);
   }
 
+  // COR-4: sessions and single are counted per DISTINCT session per
+  // page. The previous loop incremented both once per event row, so
+  // the sessions column was a pageview count and bounce rates were
+  // skewed for pages viewed repeatedly within one session.
   const pageSessions = new Map<string, { sessions: number; single: number }>();
   const sessionEventCount = new Map<string, number>();
   for (const e of events as any[]) {
     sessionEventCount.set(e.sessionId, (sessionEventCount.get(e.sessionId) || 0) + 1);
   }
-  for (const e of events as any[]) {
-    const entry = pageSessions.get(e.urlPath) || { sessions: 0, single: 0 };
-    entry.sessions++;
-    if (sessionEventCount.get(e.sessionId) === 1) entry.single++;
-    pageSessions.set(e.urlPath, entry);
+  for (const [urlPath, sessions] of sessionPages) {
+    const entry = { sessions: sessions.size, single: 0 };
+    for (const sessionId of sessions) {
+      if (sessionEventCount.get(sessionId) === 1) entry.single++;
+    }
+    pageSessions.set(urlPath, entry);
   }
 
   const bounceHeavyPages = [...pageSessions.entries()]
