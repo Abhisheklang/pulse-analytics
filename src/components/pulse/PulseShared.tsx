@@ -4,12 +4,12 @@ import { Column, Row, Text } from '@pulselytics/react-zen';
 import {
   Children,
   cloneElement,
-  isValidElement,
   useCallback,
   useEffect,
   useId,
   useRef,
   useState,
+  type ReactElement,
   type ReactNode,
 } from 'react';
 import { useApi } from '@/components/hooks';
@@ -273,12 +273,13 @@ export function Field({
   // and the label points at it, so screen readers name the field and
   // clicking the label focuses the control.
   const autoId = useId();
-  const single = Children.count(children) === 1 ? Children.only(children) : null;
-  const control =
-    isValidElement<any>(single) && !single.props.id
-      ? cloneElement(single, { id: autoId })
-      : single;
-  const labelFor = isValidElement<any>(single) ? single.props.id || autoId : undefined;
+  const child =
+    Children.count(children) === 1
+      ? (Children.only(children) as ReactElement<any> | null)
+      : null;
+  const childId = child?.props?.id as string | undefined;
+  const control = child && !childId ? cloneElement(child, { id: autoId }) : child;
+  const labelFor = child ? childId || autoId : undefined;
 
   return (
     <Column gap="1">
