@@ -5,6 +5,7 @@ import { createSecureToken } from '@/lib/jwt';
 import { addTeamBillingStatus } from '@/lib/load';
 import { checkPassword, hasDefaultPassword } from '@/lib/password';
 import prisma from '@/lib/prisma';
+import { checkRateLimit, rateLimitKey, resetRateLimitKey, tooManyRequests } from '@/lib/rate-limit';
 import redis from '@/lib/redis';
 import { parseRequest } from '@/lib/request';
 import { json, serviceUnavailable, unauthorized } from '@/lib/response';
@@ -21,6 +22,14 @@ export async function POST(request: Request) {
   }
 
   const { username, password } = body;
+
+  // SEC-3: throttle online password guessing. The attempt is counted
+  // before the credential check and a successful login clears the key.
+  const limitKey = rateLimitKey(request, 'login', String(username || '').toLowerCase());
+  const limit = checkRateLimit(limitKey, 10, 15 * 60 * 1000);
+  if (!limit.allowed) {
+    return tooManyRequests(limit.retryAfterSeconds);
+  }
 
   const user = await getUserByUsername(username, { includePassword: true });
 
@@ -49,6 +58,7 @@ export async function POST(request: Request) {
         expiresIn: '5m',
       },
     );
+    resetRateLimitKey(limitKey);
     return json({ requiresTwoFactor: true, partialToken });
   }
   // 2FA is required but not set up yet: the session is limited to the setup routes until it is.
@@ -68,6 +78,8 @@ export async function POST(request: Request) {
   }
 
   const teams = await addTeamBillingStatus(await getAllUserTeams(id));
+
+  resetRateLimitKey(limitKey);
 
   return json({
     token,
