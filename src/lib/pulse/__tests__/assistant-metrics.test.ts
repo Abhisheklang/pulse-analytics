@@ -113,3 +113,45 @@ describe('COR-2: executePlan uses the requested metric', () => {
     expect(result.total).toBe(4);
   });
 });
+
+describe('FIN-7: topic refusals apply before the LLM path', () => {
+  it('unsupportedTopic flags refused topics and clears normal questions', async () => {
+    const { unsupportedTopic } = await import('@/lib/pulse/assistant');
+    expect(unsupportedTopic('What was my revenue last week?')).toMatch(/revenue/);
+    expect(unsupportedTopic('Delete my old data')).toMatch(/read-only/);
+    expect(unsupportedTopic('How many visitors came from Google?')).toBeNull();
+  });
+
+  it('askPulse refuses a revenue question even with an LLM key configured', async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                intent: 'summary',
+                metric: 'pageviews',
+                dimension: 'none',
+                range: 'lastNDays',
+                days: 7,
+                limit: 10,
+              }),
+            },
+          },
+        ],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const { askPulse } = await import('@/lib/pulse/assistant');
+      const res = await askPulse('site-1', 'Show me revenue by day');
+      expect(res.status).toBe('refused');
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.OPENAI_API_KEY;
+      vi.unstubAllGlobals();
+    }
+  });
+});

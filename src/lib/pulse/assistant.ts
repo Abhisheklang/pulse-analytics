@@ -222,6 +222,19 @@ const UNSUPPORTED: { pattern: RegExp; reason: string }[] = [
   },
 ];
 
+/** FIN-7: the built-in parser's topic refusals apply to EVERY path,
+ *  including the LLM path. Previously an LLM-produced plan only had to
+ *  pass the field allow-list, so a refused topic (revenue, deletion,
+ *  visitor identity) that mapped onto an allow-listed plan shape was
+ *  executed anyway. Returns the refusal reason, or null. */
+export function unsupportedTopic(question: string): string | null {
+  const q = ` ${question.toLowerCase().replace(/\s+/g, ' ').trim()} `;
+  for (const { pattern, reason } of UNSUPPORTED) {
+    if (pattern.test(q)) return reason;
+  }
+  return null;
+}
+
 /** Sanitize a referrer filter candidate to a safe token, or undefined. */
 export function sanitizeFilter(raw?: string | null): string | undefined {
   if (!raw) return undefined;
@@ -355,8 +368,7 @@ export function isLLMConfigured(): boolean {
 }
 
 function openAIKey(): string | undefined {
-  const name = ['OPENAI', 'API', 'KEY'].join('_');
-  return process.env[name];
+  return process.env.OPENAI_API_KEY;
 }
 
 /** LLM parsing: the model may ONLY return a plan in the allow-listed format.
@@ -758,11 +770,14 @@ export async function askPulse(websiteId: string, question: string, now: Date = 
   let plan: QueryPlan | null = null;
   let refusal: string | null = null;
 
-  if (llmConfigured) {
+  // FIN-7: topic refusals run before any parser, LLM included.
+  refusal = unsupportedTopic(question);
+
+  if (!refusal && llmConfigured) {
     plan = await parseQuestionWithLLM(question);
     if (plan) mode = 'llm';
   }
-  if (!plan) {
+  if (!refusal && !plan) {
     const outcome = parseQuestion(question, now);
     if ('refusal' in outcome) refusal = outcome.refusal;
     else plan = outcome.plan;
