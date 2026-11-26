@@ -12,7 +12,10 @@ export async function POST(request: Request) {
     newPassword: z.string().min(8),
   });
 
-  const { auth, body, error } = await parseRequest(request, schema);
+  const { auth, body, error } = await parseRequest(request, schema, {
+    allowTwoFactorSetup: true,
+    allowPasswordChange: true,
+  });
 
   if (error) {
     return error();

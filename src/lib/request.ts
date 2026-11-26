@@ -22,7 +22,7 @@ import { getWebsiteSegment } from '@/queries/prisma';
 export async function parseRequest(
   request: Request,
   schema?: any,
-  options?: { skipAuth?: boolean; allowTwoFactorSetup?: boolean },
+  options?: { skipAuth?: boolean; allowTwoFactorSetup?: boolean; allowPasswordChange?: boolean },
 ): Promise<any> {
   const url = new URL(request.url);
   let query = Object.fromEntries(url.searchParams);
@@ -65,6 +65,16 @@ export async function parseRequest(
         forbidden({
           code: 'two-factor-error-setup-required',
           message: 'Two-factor authentication setup is required',
+        });
+    } else if (auth.passwordChangeRequired && !options?.allowPasswordChange) {
+      // SEC-5: an account still on the seeded default password can only
+      // reach the routes needed to change it (and to log out). Previously
+      // this was enforced only by a UI modal, so the API accepted the
+      // default-password session for every route.
+      error = () =>
+        forbidden({
+          code: 'password-change-required',
+          message: 'Password change is required',
         });
     }
   }

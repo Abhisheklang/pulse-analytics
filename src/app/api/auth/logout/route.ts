@@ -3,7 +3,10 @@ import { parseRequest } from '@/lib/request';
 import { ok } from '@/lib/response';
 
 export async function POST(request: Request) {
-  const { auth, error } = await parseRequest(request, null, { allowTwoFactorSetup: true });
+  const { auth, error } = await parseRequest(request, null, {
+    allowTwoFactorSetup: true,
+    allowPasswordChange: true,
+  });
 
   if (error) {
     return error();
