@@ -10,6 +10,7 @@ import {
   SESSION_COLUMNS,
 } from './constants';
 import { filtersObjectToArray } from './params';
+import { sanitizeRawOrderBy } from './sort';
 import type { Operator, PropertyFilter, QueryFilters, QueryOptions } from './types';
 
 const log = debug('pulse:prisma');
@@ -805,9 +806,12 @@ async function pagedRawQuery(
   const size = +pageSize || DEFAULT_PAGE_SIZE;
   const offset = +size * (+page - 1);
   const direction = sortDescending ? 'desc' : 'asc';
+  const safeOrderBy = sanitizeRawOrderBy(orderBy);
 
   const statements = [
-    orderBy ? `order by ${orderBy} ${direction}` : defaultOrderBy && `order by ${defaultOrderBy}`,
+    safeOrderBy
+      ? `order by ${safeOrderBy} ${direction}`
+      : defaultOrderBy && `order by ${defaultOrderBy}`,
     +size > 0 && `limit ${+size} offset ${offset}`,
   ]
     .filter(n => n)

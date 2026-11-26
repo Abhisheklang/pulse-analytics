@@ -4,6 +4,7 @@ import debug from 'debug';
 import { CLICKHOUSE } from '@/lib/db';
 import { DATA_TYPE, DEFAULT_PAGE_SIZE, FILTER_COLUMNS, OPERATORS } from './constants';
 import { filtersObjectToArray } from './params';
+import { sanitizeRawOrderBy } from './sort';
 import type { Operator, PropertyFilter, QueryFilters, QueryOptions } from './types';
 
 export const CLICKHOUSE_DATE_FORMATS = {
@@ -680,9 +681,10 @@ async function pagedRawQuery(
   const size = +pageSize || DEFAULT_PAGE_SIZE;
   const offset = +size * (+page - 1);
   const direction = sortDescending ? 'desc' : 'asc';
+  const safeOrderBy = sanitizeRawOrderBy(orderBy);
 
   const statements = [
-    orderBy && `order by ${orderBy} ${direction}`,
+    safeOrderBy && `order by ${safeOrderBy} ${direction}`,
     +size > 0 && `limit ${+size} offset ${+offset}`,
   ]
     .filter(n => n)
