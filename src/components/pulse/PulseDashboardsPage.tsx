@@ -178,6 +178,8 @@ export function PulseDashboardsPage() {
 
   const handleDelete = async () => {
     if (!selected) return;
+    // UI-1: destructive actions confirm first, like the Privacy page.
+    if (!window.confirm(`Delete the dashboard "${selected.name}"? This cannot be undone.`)) return;
     setError(null);
     try {
       await del(`/pulse/dashboards/${selected.id}`);

@@ -74,6 +74,7 @@ export function PulseAlertsPage({ websiteId }: { websiteId: string }) {
   };
 
   const handleDelete = async (rule: any) => {
+    if (!window.confirm(`Delete the alert rule "${rule.name}"? This cannot be undone.`)) return;
     try {
       await del(`/pulse/websites/${websiteId}/alerts/${rule.id}`);
       reload();

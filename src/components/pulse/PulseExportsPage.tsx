@@ -102,6 +102,7 @@ export function PulseExportsPage({ websiteId }: { websiteId: string }) {
   };
 
   const handleDelete = async (job: any) => {
+    if (!window.confirm(`Delete the export job "${job.name}"? This cannot be undone.`)) return;
     setError(null);
     try {
       await del(`/pulse/websites/${websiteId}/exports/${job.id}`);

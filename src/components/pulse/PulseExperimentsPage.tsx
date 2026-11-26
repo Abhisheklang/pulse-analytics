@@ -186,6 +186,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
   };
 
   const handleDelete = async (exp: any) => {
+    if (!window.confirm(`Delete the experiment "${exp.name}"? This cannot be undone.`)) return;
     setError(null);
     try {
       await del(`/pulse/websites/${websiteId}/experiments/${exp.id}`);

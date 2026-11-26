@@ -68,6 +68,7 @@ export function PulseReportsPage({ websiteId }: { websiteId: string }) {
   };
 
   const handleDelete = async (schedule: any) => {
+    if (!window.confirm(`Delete the report schedule "${schedule.name}"? This cannot be undone.`)) return;
     try {
       await del(`/pulse/websites/${websiteId}/reports`, { id: schedule.id });
       reload();
