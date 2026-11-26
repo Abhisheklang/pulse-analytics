@@ -81,6 +81,7 @@ export async function getExperimentResults(experiment: any, startAt?: Date, endA
       },
       select: {
         sessionId: true,
+        createdAt: true,
         eventData: { select: { dataKey: true, stringValue: true } },
       },
       take: 200000,
@@ -91,17 +92,27 @@ export async function getExperimentResults(experiment: any, startAt?: Date, endA
         eventName: experiment.conversionEvent,
         ...range,
       },
-      select: { sessionId: true },
+      select: { sessionId: true, createdAt: true },
       take: 200000,
     }),
   ]);
 
-  const convertedSessions = new Set<string>(
-    (conversionEvents as any[]).map(e => e.sessionId),
-  );
+  // COR-3: a conversion only counts for a variant when it happened at
+  // or after that session's first exposure to the variant. Counting
+  // sessions that converted before ever being exposed inflated every
+  // variant's conversion rate.
+  const firstConversionAt = new Map<string, number>();
+  for (const e of conversionEvents as any[]) {
+    const t = new Date(e.createdAt).getTime();
+    if (!firstConversionAt.has(e.sessionId) || t < firstConversionAt.get(e.sessionId)!) {
+      firstConversionAt.set(e.sessionId, t);
+    }
+  }
 
-  // variant key -> set of exposed session ids
+  // variant key -> set of exposed session ids, plus each session's
+  // first exposure time per variant
   const exposedByVariant = new Map<string, Set<string>>();
+  const firstExposureAt = new Map<string, Map<string, number>>();
   for (const event of exposureEvents as any[]) {
     let exp: string | null = null;
     let variant: string | null = null;
@@ -112,6 +123,12 @@ export async function getExperimentResults(experiment: any, startAt?: Date, endA
     if (exp !== experiment.key || !variant) continue;
     if (!exposedByVariant.has(variant)) exposedByVariant.set(variant, new Set());
     exposedByVariant.get(variant)!.add(event.sessionId);
+    if (!firstExposureAt.has(variant)) firstExposureAt.set(variant, new Map());
+    const perSession = firstExposureAt.get(variant)!;
+    const t = new Date(event.createdAt).getTime();
+    if (!perSession.has(event.sessionId) || t < perSession.get(event.sessionId)!) {
+      perSession.set(event.sessionId, t);
+    }
   }
 
   const controlKey =
@@ -122,7 +139,11 @@ export async function getExperimentResults(experiment: any, startAt?: Date, endA
     const exposures = sessions.size;
     let conversions = 0;
     for (const s of sessions) {
-      if (convertedSessions.has(s)) conversions++;
+      const convertedAt = firstConversionAt.get(s);
+      const exposedAt = firstExposureAt.get(v.key)?.get(s);
+      if (convertedAt !== undefined && exposedAt !== undefined && convertedAt >= exposedAt) {
+        conversions++;
+      }
     }
     return {
       key: v.key,
