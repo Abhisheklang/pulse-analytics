@@ -126,7 +126,7 @@ export async function pinnedFetch(rawUrl: string, init: RequestInit = {}): Promi
         new TransformStream({
           flush: close,
           cancel: close,
-        }),
+        } as Transformer),
       );
       return new Response(body, {
         status: res.status,
