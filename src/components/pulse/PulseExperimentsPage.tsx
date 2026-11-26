@@ -72,7 +72,7 @@ function ResultsTable({ results }: { results: any }) {
                       marginLeft: 8,
                       padding: '1px 8px',
                       borderRadius: 999,
-                      background: '#e0e7ff',
+                      background: 'var(--zen-status-info-bg, #e0e7ff)',
                       fontSize: 12,
                       fontWeight: 600,
                     }}
@@ -356,7 +356,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
             </thead>
             <tbody>
               {experiments.map((exp: any) => (
-                <tr key={exp.id} style={selectedId === exp.id ? { background: '#eef2ff' } : {}}>
+                <tr key={exp.id} style={selectedId === exp.id ? { background: 'var(--zen-status-info-bg, #eef2ff)' } : {}}>
                   <td style={tdStyle}>{exp.name}</td>
                   <td style={tdStyle}>{exp.key}</td>
                   <td style={tdStyle}>{exp.conversionEvent}</td>

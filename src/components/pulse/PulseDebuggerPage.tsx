@@ -143,7 +143,7 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
                         style={{
                           padding: '1px 8px',
                           borderRadius: 999,
-                          background: '#e0e7ff',
+                          background: 'var(--zen-status-info-bg, #e0e7ff)',
                           fontSize: 12,
                           fontWeight: 600,
                         }}

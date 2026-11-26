@@ -1,7 +1,17 @@
 'use client';
 
 import { Column, Row, Text } from '@pulselytics/react-zen';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useApi } from '@/components/hooks';
 import { isMotionOff } from '@/components/hooks/usePulseMotion';
 
@@ -160,9 +170,12 @@ const CHIP_TONES: Record<ChipTone, React.CSSProperties> = {
     background: 'var(--zen-status-error-bg, #fdecec)',
     color: 'var(--zen-status-error, #b91c1c)',
   },
-  warning: { background: '#fdf3e0', color: '#9a6a00' },
+  warning: {
+    background: 'var(--zen-status-warning-bg, #fdf3e0)',
+    color: 'var(--zen-status-warning, #9a6a00)',
+  },
   neutral: { background: 'var(--zen-surface-raised, #f0f0f5)', color: 'inherit' },
-  info: { background: '#eef2ff', color: PRIMARY },
+  info: { background: 'var(--zen-status-info-bg, #eef2ff)', color: 'var(--zen-status-info, #4f46e5)' },
 };
 
 export function StatusChip({ tone, children }: { tone: ChipTone; children: ReactNode }) {
@@ -255,12 +268,24 @@ export function Field({
   label: string;
   children: ReactNode;
 }) {
+  // UI-2: the label is a real <label> element associated with its
+  // control. The control receives a generated id (its own id wins)
+  // and the label points at it, so screen readers name the field and
+  // clicking the label focuses the control.
+  const autoId = useId();
+  const single = Children.count(children) === 1 ? Children.only(children) : null;
+  const control =
+    isValidElement<any>(single) && !single.props.id
+      ? cloneElement(single, { id: autoId })
+      : single;
+  const labelFor = isValidElement<any>(single) ? single.props.id || autoId : undefined;
+
   return (
     <Column gap="1">
-      <Text size="sm" weight="bold">
+      <label htmlFor={labelFor} style={{ fontSize: 14, fontWeight: 700 }}>
         {label}
-      </Text>
-      {children}
+      </label>
+      {control ?? children}
     </Column>
   );
 }
@@ -283,7 +308,11 @@ export function StatusMessage({ error, notice }: { error?: string | null; notice
       {notice && (
         <Row
           padding="3"
-          style={{ background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: RADIUS_CONTROL }}
+          style={{
+            background: 'var(--zen-status-info-bg, #eef2ff)',
+            border: '1px solid var(--zen-status-info, #c7d2fe)',
+            borderRadius: RADIUS_CONTROL,
+          }}
         >
           <Text>{notice}</Text>
         </Row>
