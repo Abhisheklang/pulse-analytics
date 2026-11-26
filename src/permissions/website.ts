@@ -1,6 +1,6 @@
 import { hasPermission } from '@/lib/auth';
 import { PERMISSIONS } from '@/lib/constants';
-import { getEntity } from '@/lib/entity';
+import { getEntity, isUuidShape } from '@/lib/entity';
 import { getBillingAccess, getTeamBillingScope, getWebsiteBillingScope } from '@/lib/load';
 import prisma from '@/lib/prisma';
 import type { Auth } from '@/lib/types';
@@ -12,6 +12,10 @@ async function hasWebsiteBillingAccess(website: Pick<Website, 'userId' | 'teamId
 }
 
 export async function canViewWebsite({ user, shareToken }: Auth, websiteId: string) {
+  if (!isUuidShape(websiteId)) {
+    return false;
+  }
+
   if (user?.isAdmin) {
     return true;
   }
@@ -51,7 +55,7 @@ export async function canViewBatchWebsites({ user, shareToken }: Auth, websiteId
     return [];
   }
 
-  const requestedIds = Array.from(new Set(websiteIds));
+  const requestedIds = Array.from(new Set(websiteIds)).filter(isUuidShape);
 
   if (user?.isAdmin) {
     return requestedIds;
@@ -153,6 +157,10 @@ export async function canUpdateWebsite({ user }: Auth, websiteId: string) {
     return false;
   }
 
+  if (!isUuidShape(websiteId)) {
+    return false;
+  }
+
   if (user.isAdmin) {
     return true;
   }
@@ -182,6 +190,10 @@ export async function canUpdateWebsite({ user }: Auth, websiteId: string) {
 
 export async function canDeleteWebsite({ user }: Auth, websiteId: string) {
   if (!user) {
+    return false;
+  }
+
+  if (!isUuidShape(websiteId)) {
     return false;
   }
 
@@ -217,6 +229,10 @@ export async function canTransferWebsiteToUser({ user }: Auth, websiteId: string
     return false;
   }
 
+  if (!isUuidShape(websiteId)) {
+    return false;
+  }
+
   if (user.isAdmin) {
     return true;
   }
@@ -242,6 +258,10 @@ export async function canTransferWebsiteToUser({ user }: Auth, websiteId: string
 
 export async function canTransferWebsiteToTeam({ user }: Auth, websiteId: string, teamId: string) {
   if (!user) {
+    return false;
+  }
+
+  if (!isUuidShape(websiteId)) {
     return false;
   }
 

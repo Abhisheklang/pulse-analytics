@@ -38,3 +38,20 @@ test('isEntityIdInUse is true when the id belongs to a user, including deleted u
   expect(await isEntityIdInUse(id)).toBe(true);
   expect(getUser).toHaveBeenCalledWith(id, { showDeleted: true });
 });
+
+// P-ADV-4: a non-UUID id must be rejected before any Prisma lookup, so the
+// permission layer returns "no entity" instead of throwing P2007 (a 500).
+test('getEntity returns null for a malformed id without querying the database', async () => {
+  const { getEntity } = await import('./entity');
+
+  expect(await getEntity('not-a-uuid')).toBeNull();
+  expect(getWebsite).not.toHaveBeenCalled();
+  expect(getLink).not.toHaveBeenCalled();
+  expect(getPixel).not.toHaveBeenCalled();
+  expect(getBoard).not.toHaveBeenCalled();
+});
+
+test('isEntityIdInUse is false for a malformed id without querying the database', async () => {
+  expect(await isEntityIdInUse('not-a-uuid')).toBe(false);
+  expect(getUser).not.toHaveBeenCalled();
+});
