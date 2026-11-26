@@ -64,6 +64,18 @@ describe('isApiKeyBlockedPath', () => {
     expect(isApiKeyBlockedPath('/api/admin/users')).toBe(true);
   });
 
+  // SEC-4: the Pulse global admin routes manage admin state (SMTP
+  // credentials, scheduler runs, audit log) and are blocked too, while
+  // per-website Pulse data routes stay reachable with an API key.
+  test('blocks Pulse global admin routes', () => {
+    expect(isApiKeyBlockedPath('/api/pulse/settings')).toBe(true);
+    expect(isApiKeyBlockedPath('/api/pulse/settings/test-email')).toBe(true);
+    expect(isApiKeyBlockedPath('/api/pulse/scheduler')).toBe(true);
+    expect(isApiKeyBlockedPath('/api/pulse/audit')).toBe(true);
+    expect(isApiKeyBlockedPath('/api/pulse/websites/abc/alerts')).toBe(false);
+    expect(isApiKeyBlockedPath('/api/pulse/rollup')).toBe(false);
+  });
+
   test('allows data routes', () => {
     expect(isApiKeyBlockedPath('/api/me')).toBe(false);
     expect(isApiKeyBlockedPath('/api/me/websites')).toBe(false);

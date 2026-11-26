@@ -15,6 +15,12 @@ export const API_KEY_BLOCKED_PATHS = [
   '/api/auth',
   '/api/users',
   '/api/admin',
+  // SEC-4: the Pulse global admin surface (SMTP settings and password,
+  // test email, scheduler control, audit log) manages admin state and
+  // must not be reachable with a personal API key either.
+  '/api/pulse/settings',
+  '/api/pulse/scheduler',
+  '/api/pulse/audit',
 ];
 
 export function generateApiKey() {
