@@ -157,14 +157,17 @@ export async function buildInsights(websiteId: string, days = 7): Promise<Insigh
     }
   }
 
-  // Country leader
+  // Country leader. COR-9: the denominator is the country-dimension
+  // total, not the device-dimension total computed above; the two are
+  // equal only while every session has both fields populated.
   const countries = await getSessionDimensionCounts(websiteId, start, now, 'country');
+  const countryTotal = [...countries.values()].reduce((a, b) => a + b, 0);
   const topCountry = [...countries.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (topCountry && curTotal >= 3) {
+  if (topCountry && countryTotal >= 3) {
     insights.push({
       type: 'top-country',
       title: `${topCountry[0]} is your top country`,
-      detail: `${topCountry[1]} of ${curTotal} sessions in the current period came from ${topCountry[0]}.`,
+      detail: `${topCountry[1]} of ${countryTotal} sessions in the current period came from ${topCountry[0]}.`,
     });
   }
 

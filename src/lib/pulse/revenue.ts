@@ -15,6 +15,15 @@ export interface RevenueRow {
   } | null;
 }
 
+// COR-9: per-event currency strings come from visitor-controlled
+// event data. Only ISO-4217-shaped codes (three uppercase letters)
+// are accepted as bucket keys; anything else falls back to the site
+// default currency, so arbitrary labels cannot be injected into the
+// owner's revenue report.
+export function sanitizeCurrency(value: unknown, fallback: string): string {
+  return typeof value === 'string' && /^[A-Z]{3}$/.test(value) ? value : fallback;
+}
+
 // Pure aggregation (unit-tested): bucket revenue rows by currency (per-event
 // override wins, else the site default), summing totals, counting events and
 // distinct sessions, and breaking down by day / page / referrer.
@@ -60,7 +69,10 @@ export function aggregateRevenueRows(
     const ev = row.websiteEvent;
     if (!ev) continue;
 
-    const currency = currencyByEvent.get(row.websiteEventId) || defaultCurrency;
+    const currency = sanitizeCurrency(
+      currencyByEvent.get(row.websiteEventId),
+      defaultCurrency,
+    );
     const b = bucketFor(currency);
     b.total += value;
     b.count += 1;
