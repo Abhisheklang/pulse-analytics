@@ -341,7 +341,11 @@ export async function POST(request: Request) {
             timestamp: createdAt ? new Date(createdAt).getTime() : undefined,
           }),
         )
-        .catch(() => {});
+        .catch((e: any) => {
+          // FIN-6: forwarding module-load failures were discarded
+          // silently; log them (ingestion still never blocks on this).
+          console.error('Pulse event forwarding failed to start:', e?.message || e);
+        });
     }
 
     const token = createToken(

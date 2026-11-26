@@ -30,7 +30,9 @@ export async function logAudit(
         details: details || undefined,
       },
     });
-  } catch {
-    // Auditing must never break the action it records.
+  } catch (e: any) {
+    // Auditing must never break the action it records, but FIN-6: a
+    // broken audit trail must not fail silently either.
+    console.error(`Pulse audit log write failed (${action}):`, e?.message || e);
   }
 }

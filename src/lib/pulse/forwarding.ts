@@ -72,7 +72,13 @@ export async function forwardEvent(payload: ForwardPayload): Promise<void> {
         error,
       },
     });
-  } catch {
-    // Forwarding must never break ingestion.
+  } catch (e: any) {
+    // Forwarding must never break ingestion, but FIN-6: a permanently
+    // broken webhook config or delivery table must be visible in the
+    // server log instead of presenting as "everything is fine".
+    console.error(
+      `Pulse event forwarding failed for website ${payload.websiteId}:`,
+      e?.message || e,
+    );
   }
 }
