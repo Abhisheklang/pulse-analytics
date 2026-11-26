@@ -407,7 +407,7 @@ export function PulseDashboardsPage() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
                 gap: 16,
               }}
             >
