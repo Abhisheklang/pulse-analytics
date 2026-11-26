@@ -84,7 +84,7 @@ export function PulseReportsPage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Create schedule
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -119,14 +119,14 @@ export function PulseReportsPage({ websiteId }: { websiteId: string }) {
             Create schedule
           </button>
         </Row>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Email delivery is recorded and config-gated (requires PULSE_SMTP_URL); webhook delivery is fully
           functional.
         </Text>
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Schedules ({schedules.length})
         </Text>
         {schedules.length === 0 ? (
@@ -172,7 +172,7 @@ export function PulseReportsPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Report history
         </Text>
         {logs.length === 0 ? (

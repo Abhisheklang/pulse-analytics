@@ -91,7 +91,7 @@ export function PulseBadgePage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Column gap="3" style={cardStyle}>
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Public live badge
         </Text>
         <Text>
@@ -110,12 +110,12 @@ export function PulseBadgePage({ websiteId }: { websiteId: string }) {
         </Row>
         {setting?.badgeEnabled && badgeUrl && (
           <Column gap="2">
-            <Text weight="bold" size="2">
+            <Text weight="bold" size="sm">
               Preview
             </Text>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={badgeUrl} alt="Pulse visitors today badge" width={190} height={20} />
-            <Text weight="bold" size="2">
+            <Text weight="bold" size="sm">
               Embed snippet
             </Text>
             <code style={{ wordBreak: 'break-all', fontSize: 12 }}>{embed}</code>
@@ -124,10 +124,10 @@ export function PulseBadgePage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3" style={cardStyle}>
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Event webhook forwarding
         </Text>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Accepted events from the tracking script are forwarded best-effort (3s timeout, never blocks
           collection). An optional secret is sent as the x-pulse-secret header.
         </Text>
@@ -173,7 +173,7 @@ export function PulseBadgePage({ websiteId }: { websiteId: string }) {
           </button>
         </Row>
 
-        <Text weight="bold" size="3">
+        <Text weight="bold" size="base">
           Recent deliveries ({deliveries.length})
         </Text>
         {deliveries.length === 0 ? (

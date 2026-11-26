@@ -83,7 +83,7 @@ export function PulseOnboardingPage() {
       <StatusMessage error={error || actionError} notice={notice} />
 
       {data && (
-        <Text size="3" color="muted">
+        <Text size="base" color="muted">
           {data.complete
             ? 'All required steps are complete — Pulse is collecting data.'
             : `${data.completed} of ${data.total} required steps complete.`}
@@ -103,7 +103,7 @@ export function PulseOnboardingPage() {
                   {step.done ? 'Done' : 'Pending'}
                 </StatusChip>
               </Row>
-              <Text size="2" color="muted">
+              <Text size="sm" color="muted">
                 {STEP_HINTS[step.key]}
               </Text>
 

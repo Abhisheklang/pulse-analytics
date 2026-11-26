@@ -103,7 +103,7 @@ export function PulseDebuggerPage({ websiteId }: { websiteId: string }) {
           onChange={e => setFilter(e.target.value)}
           placeholder="Filter by event name or path…"
         />
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           {paused
             ? 'Paused'
             : `Live · last updated ${lastUpdated ? lastUpdated.toLocaleTimeString() : '…'}`}

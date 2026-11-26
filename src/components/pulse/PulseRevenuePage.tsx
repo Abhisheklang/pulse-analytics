@@ -62,7 +62,7 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Row gap="3" alignItems="center">
-        <Text size="2" weight="bold">
+        <Text size="sm" weight="bold">
           Period
         </Text>
         <select
@@ -92,39 +92,39 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
 
       <Row gap="3" wrap="wrap">
         <Column gap="1" style={{ ...cardStyle, minWidth: 200 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Total revenue
           </Text>
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {data ? money(data.total) : '…'}
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             {data?.eventCount ?? 0} revenue events
           </Text>
         </Column>
         <Column gap="1" style={{ ...cardStyle, minWidth: 200 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Paying visitors
           </Text>
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {data?.visitors ?? 0}
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             distinct visitors with revenue
           </Text>
         </Column>
         <Column gap="1" style={{ ...cardStyle, minWidth: 200 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Avg revenue / visitor
           </Text>
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {data ? money(data.avgPerVisitor) : '…'}
           </Text>
         </Column>
       </Row>
 
       {!!data?.otherCurrencies?.length && (
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Other currencies in this period:{' '}
           {data.otherCurrencies
             .map((c: any) => `${c.currency} ${c.total} (${c.eventCount} events)`)
@@ -133,7 +133,7 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
       )}
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Revenue by day
         </Text>
         {!data?.byDay?.length ? (
@@ -162,7 +162,7 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
 
       <Row gap="5" wrap="wrap">
         <Column gap="3" style={{ flex: 1, minWidth: 320 }}>
-          <Text size="4" weight="bold">
+          <Text size="lg" weight="bold">
             Revenue by page
           </Text>
           {!data?.byPage?.length ? (
@@ -189,7 +189,7 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
           )}
         </Column>
         <Column gap="3" style={{ flex: 1, minWidth: 320 }}>
-          <Text size="4" weight="bold">
+          <Text size="lg" weight="bold">
             Revenue by referrer
           </Text>
           {!data?.byReferrer?.length ? (
@@ -218,10 +218,10 @@ export function PulseRevenuePage({ websiteId }: { websiteId: string }) {
       </Row>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           How to track revenue
         </Text>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           On your checkout or success page, send a custom event whose data includes a numeric{' '}
           <b>revenue</b> value (and optionally a 3-letter <b>currency</b>; events without one use
           this website's default currency above).

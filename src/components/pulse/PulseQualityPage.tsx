@@ -25,7 +25,7 @@ function MiniTable({
     <Column gap="2" style={{ ...cardStyle, flex: '1 1 420px' }}>
       <Text weight="bold">{title}</Text>
       {rows.length === 0 ? (
-        <Text color="muted" size="2">
+        <Text color="muted" size="sm">
           No data.
         </Text>
       ) : (
@@ -71,20 +71,20 @@ export function PulseQualityPage({ websiteId }: { websiteId: string }) {
         <>
           <Row gap="3" wrap="wrap">
             <Column style={cardStyle} gap="1">
-              <Text size="2" color="muted">Pageviews (30d)</Text>
-              <Text size="5" weight="bold">{report.totalPageviews}</Text>
+              <Text size="sm" color="muted">Pageviews (30d)</Text>
+              <Text size="xl" weight="bold">{report.totalPageviews}</Text>
             </Column>
             <Column style={cardStyle} gap="1">
-              <Text size="2" color="muted">Broken-page views</Text>
-              <Text size="5" weight="bold">{report.brokenViews} ({report.brokenShare}%)</Text>
+              <Text size="sm" color="muted">Broken-page views</Text>
+              <Text size="xl" weight="bold">{report.brokenViews} ({report.brokenShare}%)</Text>
             </Column>
             <Column style={cardStyle} gap="1">
-              <Text size="2" color="muted">Views with no referrer</Text>
-              <Text size="5" weight="bold">{report.noReferrerShare}%</Text>
+              <Text size="sm" color="muted">Views with no referrer</Text>
+              <Text size="xl" weight="bold">{report.noReferrerShare}%</Text>
             </Column>
             <Column style={cardStyle} gap="1">
-              <Text size="2" color="muted">Spam referrers flagged</Text>
-              <Text size="5" weight="bold">{report.spamReferrers?.length || 0}</Text>
+              <Text size="sm" color="muted">Spam referrers flagged</Text>
+              <Text size="xl" weight="bold">{report.spamReferrers?.length || 0}</Text>
             </Column>
           </Row>
 

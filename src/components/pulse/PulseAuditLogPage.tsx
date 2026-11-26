@@ -39,7 +39,7 @@ export function PulseAuditLogPage() {
       <StatusMessage error={error} />
 
       <Row gap="3" alignItems="center">
-        <Text size="2" weight="bold">
+        <Text size="sm" weight="bold">
           Action type
         </Text>
         <select
@@ -54,7 +54,7 @@ export function PulseAuditLogPage() {
             </option>
           ))}
         </select>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           {data ? `${logs.length} entries` : 'Loading…'}
         </Text>
       </Row>
@@ -81,7 +81,7 @@ export function PulseAuditLogPage() {
                 <td style={tdStyle}>{log.websiteName || log.websiteId || '—'}</td>
                 <td style={tdStyle}>
                   <Text
-                    size="2"
+                    size="sm"
                     style={{ fontFamily: 'monospace', wordBreak: 'break-word' }}
                   >
                     {log.details ? JSON.stringify(log.details) : '—'}

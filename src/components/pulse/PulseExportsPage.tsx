@@ -120,7 +120,7 @@ export function PulseExportsPage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Create export job
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -258,10 +258,10 @@ export function PulseExportsPage({ websiteId }: { websiteId: string }) {
 
       <Column gap="3">
         <Row gap="3" alignItems="center">
-          <Text size="4" weight="bold">
+          <Text size="lg" weight="bold">
             Export jobs
           </Text>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Range
           </Text>
           <select
@@ -323,7 +323,7 @@ export function PulseExportsPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Export history
         </Text>
         {logs.length === 0 ? (

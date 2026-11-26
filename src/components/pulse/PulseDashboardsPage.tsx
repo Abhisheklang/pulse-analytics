@@ -30,26 +30,26 @@ const newWidgetId = () =>
 
 function WidgetValue({ widget, value }: { widget: Widget; value: any }) {
   if (!value) return <Text color="muted">Loading…</Text>;
-  if (value.error) return <Text color="danger">{value.error}</Text>;
+  if (value.error) return <Text style={{ color: 'var(--zen-status-error, #b91c1c)' }}>{value.error}</Text>;
 
   switch (widget.type) {
     case 'visitors':
     case 'views':
     case 'online':
       return (
-        <Text size="6" weight="bold">
+        <Text size="2xl" weight="bold">
           {value.value}
         </Text>
       );
     case 'bounce':
       return (
-        <Text size="6" weight="bold">
+        <Text size="2xl" weight="bold">
           {value.value}%
         </Text>
       );
     case 'revenue':
       return (
-        <Text size="6" weight="bold">
+        <Text size="2xl" weight="bold">
           {value.currency} {Number(value.value).toFixed(2)}
         </Text>
       );
@@ -289,7 +289,7 @@ export function PulseDashboardsPage() {
               Save layout
             </button>
           </Row>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             Drag a widget row by its handle to reorder. Changes are saved when you press “Save
             layout”.
           </Text>
@@ -395,7 +395,7 @@ export function PulseDashboardsPage() {
         </Column>
       ) : (
         <Column gap="3">
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {selected.name}
           </Text>
           {!layout.length ? (
@@ -415,7 +415,7 @@ export function PulseDashboardsPage() {
                 >
                   <div style={{ ...cardStyle, height: '100%', boxSizing: 'border-box' }}>
                     <Column gap="2">
-                      <Text size="2" weight="bold">
+                      <Text size="sm" weight="bold">
                         {catalogLabel(w.type)}
                         <Text color="muted">
                           {' '}

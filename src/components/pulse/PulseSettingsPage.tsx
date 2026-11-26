@@ -74,10 +74,10 @@ export function PulseSettingsPage() {
 
       <Column gap="4">
         <Column gap="1">
-          <Text size="4" weight="bold">
+          <Text size="lg" weight="bold">
             Email (SMTP)
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             Outgoing mail server used by email alerts and scheduled email reports. The password is
             stored on the server and never shown again — leave it as •••• to keep the current one.
           </Text>
@@ -157,13 +157,13 @@ export function PulseSettingsPage() {
               <button style={primaryButtonStyle} onClick={save} disabled={busy === 'save'}>
                 {busy === 'save' ? 'Saving…' : 'Save email settings'}
               </button>
-              <Text size="2" color="muted">
+              <Text size="sm" color="muted">
                 {form.configured ? 'SMTP is configured.' : 'SMTP is not configured yet.'}
               </Text>
             </Row>
 
             <Column gap="2">
-              <Text size="3" weight="bold">
+              <Text size="base" weight="bold">
                 Send a test email
               </Text>
               <Row gap="3" wrap="wrap" alignItems="center">

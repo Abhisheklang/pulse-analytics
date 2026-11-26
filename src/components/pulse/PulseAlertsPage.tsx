@@ -90,7 +90,7 @@ export function PulseAlertsPage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Create rule
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -152,7 +152,7 @@ export function PulseAlertsPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Rules ({rules.length})
         </Text>
         {rules.length === 0 ? (
@@ -194,7 +194,7 @@ export function PulseAlertsPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Evaluation history
         </Text>
         {logs.length === 0 ? (

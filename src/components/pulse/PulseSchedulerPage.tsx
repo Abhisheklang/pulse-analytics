@@ -133,7 +133,7 @@ export function PulseSchedulerPage() {
               {busy === 'save' ? 'Saving…' : 'Save settings'}
             </button>
           </Row>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             Status: {data?.config?.enabled ? 'enabled' : 'disabled'} · this server instance{' '}
             {data?.instanceId || ''}
           </Text>
@@ -141,7 +141,7 @@ export function PulseSchedulerPage() {
       )}
 
       <Column gap="2">
-        <Text size="3" weight="bold">
+        <Text size="base" weight="bold">
           Jobs
         </Text>
         {jobs.length === 0 ? (
@@ -185,7 +185,7 @@ export function PulseSchedulerPage() {
       </Column>
 
       <Column gap="2">
-        <Text size="3" weight="bold">
+        <Text size="base" weight="bold">
           Run history
         </Text>
         {logs.length === 0 ? (

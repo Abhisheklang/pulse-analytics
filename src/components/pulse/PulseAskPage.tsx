@@ -33,7 +33,7 @@ function ResultBars({ rows }: { rows: any[] }) {
       {rows.slice(0, 10).map((row, i) => (
         <Row key={i} gap="3" alignItems="center">
           <div style={{ width: 180, minWidth: 0 }}>
-            <Text size="2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+            <Text size="sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
               {row.name}
             </Text>
           </div>
@@ -55,7 +55,7 @@ function ResultBars({ rows }: { rows: any[] }) {
               }}
             />
           </div>
-          <Text size="2" weight="bold" style={{ minWidth: 48, textAlign: 'right' }}>
+          <Text size="sm" weight="bold" style={{ minWidth: 48, textAlign: 'right' }}>
             {row.value}
           </Text>
         </Row>
@@ -72,7 +72,7 @@ function AnswerCard({ entry }: { entry: AskEntry }) {
 
   return (
     <Column gap="3" style={cardStyle}>
-      <Text weight="bold" size="4">
+      <Text weight="bold" size="lg">
         {entry.question}
       </Text>
       <Text>{response.explanation}</Text>
@@ -80,7 +80,7 @@ function AnswerCard({ entry }: { entry: AskEntry }) {
       {response.status === 'refused' && response.capabilities && (
         <Column gap="1">
           {response.capabilities.map((c: string) => (
-            <Text key={c} size="2" color="muted">
+            <Text key={c} size="sm" color="muted">
               • {c}
             </Text>
           ))}
@@ -88,7 +88,7 @@ function AnswerCard({ entry }: { entry: AskEntry }) {
       )}
 
       {response.plan && (
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Query plan — intent: {response.plan.intent} · metric: {response.plan.metric} ·
           breakdown: {response.plan.dimension} · period: {response.plan.period}
           {response.plan.filter ? ` · filter: ${response.plan.filter}` : ''} · answered with the{' '}
@@ -213,7 +213,7 @@ export function PulseAskPage({ websiteId }: { websiteId: string }) {
           </Row>
         )}
         {!llmMode && meta && (
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             The built-in parser covers the question types listed under the examples. Set the
             OPENAI_API_KEY environment variable on the server to enable LLM mode for free-form
             phrasing — answers still run through the same safe, allow-listed query plans.

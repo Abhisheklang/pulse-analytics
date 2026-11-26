@@ -108,7 +108,7 @@ function ResultsTable({ results }: { results: any }) {
           ))}
         </tbody>
       </table></TableWrap>
-      <Text size="2" color="muted">
+      <Text size="sm" color="muted">
         Exposures count distinct visitors (sessions) assigned to a variant; a conversion is an
         exposed session that later fired the conversion event. Significance uses a pooled
         two-proportion z-test against the control.
@@ -207,7 +207,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
     >
       <StatusMessage error={error} notice={notice} />
 
-      <Text size="2" color="muted">
+      <Text size="sm" color="muted">
         To collect assignments, add this add-on next to the standard tracking script on your
         site: <code>{'<script async src="/pulse-ab.js"></script>'}</code> — then read the
         assigned variant in your page code via{' '}
@@ -215,7 +215,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
       </Text>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Create experiment
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -258,7 +258,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
           </Field>
         </Row>
         <Column gap="2">
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Variants (first row is the control)
           </Text>
           {variants.map((v, i) => (
@@ -296,7 +296,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
                 placeholder="Weight"
               />
               {i === 0 ? (
-                <Text size="2" color="muted">
+                <Text size="sm" color="muted">
                   control
                 </Text>
               ) : (
@@ -337,7 +337,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Experiments
         </Text>
         {experiments.length === 0 ? (
@@ -393,7 +393,7 @@ export function PulseExperimentsPage({ websiteId }: { websiteId: string }) {
 
       {selectedId && (
         <Column gap="3">
-          <Text size="4" weight="bold">
+          <Text size="lg" weight="bold">
             Results (last 30 days)
           </Text>
           {results ? <ResultsTable results={results} /> : <Text color="muted">Loading…</Text>}

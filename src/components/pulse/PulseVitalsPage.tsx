@@ -68,13 +68,13 @@ export function PulseVitalsPage({ websiteId }: { websiteId: string }) {
     >
       <StatusMessage error={error} />
 
-      <Text size="2" color="muted">
+      <Text size="sm" color="muted">
         To collect vitals, add this add-on next to the standard tracking script on your site:{' '}
         <code>{'<script async src="/pulse-vitals.js"></script>'}</code>
       </Text>
 
       <Row gap="3" alignItems="center">
-        <Text size="2" weight="bold">
+        <Text size="sm" weight="bold">
           Period
         </Text>
         <select
@@ -86,7 +86,7 @@ export function PulseVitalsPage({ websiteId }: { websiteId: string }) {
           <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
         </select>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           {data ? `${data.eventCount} vitals events collected` : 'Loading…'}
         </Text>
       </Row>
@@ -94,11 +94,11 @@ export function PulseVitalsPage({ websiteId }: { websiteId: string }) {
       <Row gap="3" wrap="wrap">
         {metrics.map(metric => (
           <Column key={metric} gap="1" style={{ ...cardStyle, minWidth: 180 }}>
-            <Text size="2" weight="bold">
+            <Text size="sm" weight="bold">
               {METRIC_LABELS[metric]}
             </Text>
             <RatingChip metric={metric} summary={summary[metric]} />
-            <Text size="2" color="muted">
+            <Text size="sm" color="muted">
               {summary[metric]
                 ? `${summary[metric].count} samples · good ≤ ${formatValue(metric, data.thresholds[metric].good)}`
                 : 'No samples yet'}
@@ -108,7 +108,7 @@ export function PulseVitalsPage({ websiteId }: { websiteId: string }) {
       </Row>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           By page
         </Text>
         {pages.length === 0 ? (
@@ -142,7 +142,7 @@ export function PulseVitalsPage({ websiteId }: { websiteId: string }) {
             </tbody>
           </table></TableWrap>
         )}
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Thresholds: LCP good ≤ 2.5s, INP good ≤ 200ms, CLS good ≤ 0.1. Chips show the p75 value
           (75% of visits were at or below it) coloured by rating.
         </Text>

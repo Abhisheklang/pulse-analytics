@@ -24,11 +24,11 @@ export function PulseInsightsPage({ websiteId }: { websiteId: string }) {
           {insights.map((insight: any, i: number) => (
             <Reveal key={i}>
               <Column gap="1" style={cardStyle}>
-                <Text weight="bold" size="4">
+                <Text weight="bold" size="lg">
                   {insight.title}
                 </Text>
                 <Text color="muted">{insight.detail}</Text>
-                <Text size="1" color="muted">
+                <Text size="xs" color="muted">
                   {insight.type}
                 </Text>
               </Column>

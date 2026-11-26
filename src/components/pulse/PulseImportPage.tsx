@@ -84,7 +84,7 @@ export function PulseImportPage({ websiteId }: { websiteId: string }) {
           </button>
         </Row>
         {fileName && (
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             Loaded {fileName} ({csvText.length} characters). Aggregate rows with a views/pageviews count
             are expanded into individual pageviews.
           </Text>
@@ -99,7 +99,7 @@ export function PulseImportPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Import history
         </Text>
         {logs.length === 0 ? (

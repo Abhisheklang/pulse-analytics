@@ -60,7 +60,8 @@
     "lint:i18n": "eloqnt lint",
     "format": "biome format --write .",
     "check": "biome check --write",
-    "test:pulse": "DATABASE_URL=${DATABASE_URL:-postgresql://pulse:pulse@localhost:5432/pulse} vitest run src/lib/pulse/__tests__"
+    "test:pulse": "DATABASE_URL=${DATABASE_URL:-postgresql://pulse:pulse@localhost:5432/pulse} vitest run src/lib/pulse/__tests__",
+    "check:types": "tsc -p tsconfig.json --noEmit"
   },
   "cacheDirectories": [
     ".next/cache"

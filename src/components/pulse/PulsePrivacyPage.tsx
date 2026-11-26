@@ -158,7 +158,7 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
       <StatusMessage error={error} notice={notice} />
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Current data
         </Text>
         <Text>
@@ -169,7 +169,7 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Retention
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -190,7 +190,7 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
             Run cleanup now
           </button>
         </Row>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Current setting: {setting ? `${setting.retentionDays} days` : '…'} · Cleanup deletes events (and
           orphaned sessions) older than the cutoff for this website only.
         </Text>
@@ -204,7 +204,7 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Export events
         </Text>
         <Row gap="3">
@@ -215,17 +215,17 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
             Download JSON
           </button>
         </Row>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Exports up to 50,000 events for this website (all dates, or use the API with startAt/endAt
           parameters for a specific range).
         </Text>
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Visitor data (GDPR toolkit)
         </Text>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           Look up everything stored for one visitor by their session ID — for data access and
           erasure requests. You can find session IDs on the Sessions page.
         </Text>
@@ -297,7 +297,7 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Privacy audit — what Pulse stores
         </Text>
         {!audit ? (
@@ -315,10 +315,10 @@ export function PulsePrivacyPage({ websiteId }: { websiteId: string }) {
                 Retention: <b>{audit.retentionDays > 0 ? `${audit.retentionDays} days` : 'Keep forever'}</b>
               </Text>
             </Row>
-            <Text size="2" color="muted">
+            <Text size="sm" color="muted">
               {audit.rawIpNote}
             </Text>
-            <Text size="2" color="muted">
+            <Text size="sm" color="muted">
               {audit.cookiesNote}
             </Text>
             <TableWrap><table style={tableStyle}>

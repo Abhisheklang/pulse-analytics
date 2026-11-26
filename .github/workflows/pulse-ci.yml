@@ -55,6 +55,12 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # FIN-1: the full typecheck is a gate. It previously never ran,
+      # which let the Pulse UI drift from the shipped react-zen prop
+      # types (120 errors) while every other gate stayed green.
+      - name: Typecheck
+        run: pnpm check:types
+
       - name: Build
         run: pnpm build
 

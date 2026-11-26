@@ -81,7 +81,7 @@ describe('url-guard: guardedFetch redirect revalidation (SEC-2)', () => {
   }
 
   it('returns a direct response without following anything', async () => {
-    const fetchMock = vi.fn(async () => fakeResponse(200));
+    const fetchMock = vi.fn(async (_url: any, _init?: any) => fakeResponse(200));
     vi.stubGlobal('fetch', fetchMock);
     const res = await guardedFetch('http://8.8.8.8/hook', { method: 'POST', body: '{}' });
     expect(res.status).toBe(200);
@@ -110,7 +110,7 @@ describe('url-guard: guardedFetch redirect revalidation (SEC-2)', () => {
 
   it('follows a redirect to another public URL', async () => {
     const fetchMock = vi
-      .fn()
+      .fn(async (_url: any, _init?: any) => fakeResponse(200))
       .mockResolvedValueOnce(fakeResponse(307, 'http://1.1.1.1/final'))
       .mockResolvedValueOnce(fakeResponse(200));
     vi.stubGlobal('fetch', fetchMock);

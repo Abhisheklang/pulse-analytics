@@ -232,11 +232,11 @@ export function PulseShell({
     >
       <Row justifyContent="space-between" alignItems="flex-start" gap="3" wrap="wrap">
         <Column gap="1">
-          <Text size="6" weight="bold">
+          <Text size="2xl" weight="bold">
             {title}
           </Text>
           {subtitle && (
-            <Text color="muted" size="3">
+            <Text color="muted" size="base">
               {subtitle}
             </Text>
           )}
@@ -257,7 +257,7 @@ export function Field({
 }) {
   return (
     <Column gap="1">
-      <Text size="2" weight="bold">
+      <Text size="sm" weight="bold">
         {label}
       </Text>
       {children}
@@ -277,7 +277,7 @@ export function StatusMessage({ error, notice }: { error?: string | null; notice
             borderRadius: RADIUS_CONTROL,
           }}
         >
-          <Text color="danger">{error}</Text>
+          <Text style={{ color: 'var(--zen-status-error, #b91c1c)' }}>{error}</Text>
         </Row>
       )}
       {notice && (

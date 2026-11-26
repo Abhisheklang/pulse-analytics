@@ -7,18 +7,20 @@ import { isCronAuthorized } from '@/lib/pulse/cron-auth';
 
 const savedCronSecret = process.env.CRON_SECRET;
 const savedNodeEnv = process.env.NODE_ENV;
+// NODE_ENV is typed read-only; tests mutate it through this alias.
+const env = process.env as Record<string, string | undefined>;
 
 afterEach(() => {
   if (savedCronSecret === undefined) delete process.env.CRON_SECRET;
   else process.env.CRON_SECRET = savedCronSecret;
-  if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-  else process.env.NODE_ENV = savedNodeEnv;
+  if (savedNodeEnv === undefined) delete env.NODE_ENV;
+  else env.NODE_ENV = savedNodeEnv;
 });
 
 describe('cron-auth: CRON_SECRET unset in production fails closed', () => {
   it('denies the exact request shape Next.js delivers (localhost URL, no X-Forwarded-For)', () => {
     delete process.env.CRON_SECRET;
-    process.env.NODE_ENV = 'production';
+    env.NODE_ENV = 'production';
 
     const req = new Request('http://localhost:3000/api/pulse/cron/uptime', { method: 'POST' });
     expect(isCronAuthorized(req)).toBe(false);
@@ -26,7 +28,7 @@ describe('cron-auth: CRON_SECRET unset in production fails closed', () => {
 
   it('denies a spoofed private X-Forwarded-For hop', () => {
     delete process.env.CRON_SECRET;
-    process.env.NODE_ENV = 'production';
+    env.NODE_ENV = 'production';
 
     const req = new Request('http://localhost:3000/api/pulse/cron/reports', {
       method: 'POST',
@@ -37,7 +39,7 @@ describe('cron-auth: CRON_SECRET unset in production fails closed', () => {
 
   it('denies a request carrying an x-cron-secret header when no secret is configured', () => {
     delete process.env.CRON_SECRET;
-    process.env.NODE_ENV = 'production';
+    env.NODE_ENV = 'production';
 
     const req = new Request('http://localhost:3000/api/pulse/cron/alerts', {
       method: 'POST',

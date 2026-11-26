@@ -32,7 +32,7 @@ export function PulseRollupPage() {
       <StatusMessage error={error} />
 
       <Row gap="3" alignItems="center">
-        <Text size="2" weight="bold">
+        <Text size="sm" weight="bold">
           Period
         </Text>
         <select
@@ -44,7 +44,7 @@ export function PulseRollupPage() {
           <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
         </select>
-        <Text size="2" color="muted">
+        <Text size="sm" color="muted">
           {data ? `${perSite.length} websites included` : 'Loading…'}
         </Text>
       </Row>
@@ -57,10 +57,10 @@ export function PulseRollupPage() {
           ['Bounce rate', totals ? `${totals.bounceRate}%` : undefined],
         ].map(([label, value]) => (
           <Column key={label as string} gap="1" style={{ ...cardStyle, minWidth: 180 }}>
-            <Text size="2" weight="bold">
+            <Text size="sm" weight="bold">
               {label}
             </Text>
-            <Text size="5" weight="bold">
+            <Text size="xl" weight="bold">
               {value ?? '…'}
             </Text>
           </Column>
@@ -68,7 +68,7 @@ export function PulseRollupPage() {
       </Row>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Combined daily trend
         </Text>
         {trend.length === 0 ? (
@@ -93,7 +93,7 @@ export function PulseRollupPage() {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Per-site comparison
         </Text>
         {perSite.length === 0 ? (

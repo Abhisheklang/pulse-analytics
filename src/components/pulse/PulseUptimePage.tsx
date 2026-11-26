@@ -86,49 +86,49 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
 
       <Row gap="3" wrap="wrap">
         <Column gap="1" style={{ ...cardStyle, minWidth: 200 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Current status
           </Text>
-          <Text size="5" weight="bold" style={{ color: statusColor }}>
+          <Text size="xl" weight="bold" style={{ color: statusColor }}>
             {status === 'up' ? '● Up' : status === 'down' ? '● Down' : 'Unknown'}
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             {data?.lastCheck
               ? `Last check ${formatDateTime(data.lastCheck.createdAt)} · ${data.lastCheck.responseMs} ms${data.lastCheck.status ? ` · HTTP ${data.lastCheck.status}` : ''}`
               : 'No checks yet'}
           </Text>
         </Column>
         <Column gap="1" style={{ ...cardStyle, minWidth: 160 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Uptime (24h)
           </Text>
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {data?.uptime24h != null ? `${data.uptime24h}%` : '—'}
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             {data?.checks24h ?? 0} checks
           </Text>
         </Column>
         <Column gap="1" style={{ ...cardStyle, minWidth: 160 }}>
-          <Text size="2" weight="bold">
+          <Text size="sm" weight="bold">
             Uptime (30d)
           </Text>
-          <Text size="5" weight="bold">
+          <Text size="xl" weight="bold">
             {data?.uptime30d != null ? `${data.uptime30d}%` : '—'}
           </Text>
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             {data?.checks30d ?? 0} checks
           </Text>
         </Column>
       </Row>
 
       <Column gap="2">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Public status page
         </Text>
         {data?.statusPage?.enabled ? (
           <>
-            <Text size="2" color="muted">
+            <Text size="sm" color="muted">
               Share this page publicly — it shows the current status, uptime and recent
               checks for this website. It is protected by the same per-site token as the
               live badge, so only people with the link can open it.
@@ -138,7 +138,7 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
             </code>
           </>
         ) : (
-          <Text size="2" color="muted">
+          <Text size="sm" color="muted">
             Not enabled. The public status page uses the live badge&rsquo;s per-site token —
             enable the badge on the Badge &amp; Webhooks page and the status page will be
             available at <code>{data?.statusPage?.path || `/status/${websiteId}`}</code> with
@@ -148,7 +148,7 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Monitor settings
         </Text>
         <Row gap="3" wrap="wrap" alignItems="flex-end">
@@ -197,7 +197,7 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Incidents
         </Text>
         {!data?.incidents?.length ? (
@@ -227,7 +227,7 @@ export function PulseUptimePage({ websiteId }: { websiteId: string }) {
       </Column>
 
       <Column gap="3">
-        <Text size="4" weight="bold">
+        <Text size="lg" weight="bold">
           Recent checks
         </Text>
         {!data?.recentChecks?.length ? (
