@@ -1,4 +1,5 @@
 import { logAudit } from '@/lib/pulse/audit';
+import { csvEscape } from '@/lib/pulse/html';
 import { pulseDb } from '@/lib/pulse/stats';
 import { parseRequest } from '@/lib/request';
 import { unauthorized } from '@/lib/response';
@@ -63,11 +64,10 @@ export async function GET(
     });
   }
 
-  const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const header = 'id,sessionId,createdAt,urlPath,urlQuery,referrerDomain,pageTitle,eventType,eventName,hostname';
   const lines = events.map((e: any) =>
     [e.id, e.sessionId, e.createdAt?.toISOString(), e.urlPath, e.urlQuery, e.referrerDomain, e.pageTitle, e.eventType, e.eventName, e.hostname]
-      .map(esc)
+      .map(csvEscape)
       .join(','),
   );
 
